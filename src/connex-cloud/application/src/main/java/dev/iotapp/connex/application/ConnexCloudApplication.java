@@ -9,5 +9,4 @@ public class ConnexCloudApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ConnexCloudApplication.class, args);
 	}
-
 }

@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#app {
+    @apply flex flex-col min-h-screen overflow-x-hidden;
+}

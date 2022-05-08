@@ -16,6 +16,32 @@ const router = createRouter({
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue')
+    },
+    {
+      path:'/edge-gateways',
+      name: 'edge-gateways',
+      component: () => import('../views/EdgeGatewaysView.vue'),
+      children: [
+        {
+          // When "/edge-gateways/add" matchs
+          path: 'add',
+          component: () => import('../views/edge-gateways/AddView.vue'),
+        },
+        {
+          path: ':id',
+          component: () => import('../views/edge-gateways/HomeView.vue'),
+          children: [
+            {
+              path: 'data-sources/list',
+              component: () => import('../views/edge-gateways/DataSourcesView.vue')
+            },
+            {
+              path: 'data-sources/:dataSrcName',
+              component: () => import('../views/edge-gateways/DataSourceDetailView.vue')
+            }
+          ]
+        }
+      ]
     }
   ]
 })

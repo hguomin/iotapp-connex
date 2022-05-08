@@ -1,0 +1,12 @@
+{
+    "gateways":[
+        {
+            "id":"gw-1",
+            "name": "Gateway 1"
+        },
+        {
+            "id":"gw-2",
+            "name": "Gateway 2"
+        }
+    ]
+}
