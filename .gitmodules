@@ -1,0 +1,3 @@
+[submodule "src/connex-edge/opc"]
+	path = src/connex-edge/opc
+	url = https://github.com/hguomin/az-iiot-opc-e2e-solution.git

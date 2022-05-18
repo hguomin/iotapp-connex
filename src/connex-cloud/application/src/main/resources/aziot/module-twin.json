@@ -1,0 +1,29 @@
+{
+    "Product": "ConnexEdge",
+    "Application": "ProtocolGateway",
+    "DataSouorces": {
+        "OpcUa": [
+            {
+                "Name": "OPC DA to UA Protocol Gateway",
+                "Tags": "",
+                "Description": "",
+                "Configuration": {
+                    "EndpointUrl": "opc.tcp://10.2.0.4:48400/UA/ComServerWrapper",
+                    "UseSecurity": false,
+                    "OpcAuthenticationMode": "UsernamePassword",
+                    "Username": "opcda",
+                    "Password": "Password01!",
+                    "OpcNodes": [
+                        {
+                            "Id": "ns=2;s=0:Random.Real8",
+                            "OpcSamplingInterval": 1000,
+                            "OpcPublishingInterval": 1000
+                        }
+                    ]
+                }
+            }
+        ],
+        "Modbus": [],
+        "EthernetIP": []
+    }
+}

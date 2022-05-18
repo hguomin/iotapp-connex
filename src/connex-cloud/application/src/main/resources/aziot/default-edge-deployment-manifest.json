@@ -1,0 +1,83 @@
+{
+    "modulesContent": {
+        "$edgeAgent": {
+            "properties.desired": {
+                "modules": {
+                    "opcua-publisher": {
+                        "settings": {
+                            "image": "gmdevcr.azurecr.io/iot/opcua-publisher:2.5.6",
+                            "createOptions": "{\"Hostname\":\"opcua-publisher\",\"Cmd\":[\"--pf=./publishednodes.json\",\"--aa\"],\"HostConfig\":{\"Binds\":[\"/opt/opcua-publisher:/appdata\"]}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "devplus-dev": {
+                        "settings": {
+                            "image": "hguomin/devplus:dev-java-11-python-3.8",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"22/tcp\":[{\"HostPort\":\"8022\"}]}}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                },
+                "runtime": {
+                    "settings": {
+                        "minDockerVersion": "v1.25",
+                        "registryCredentials": {
+                            "gmdevcr": {
+                                "address": "gmdevcr.azurecr.io",
+                                "password": "KEoHXaDOq/37XyJzXg8nqwmFiPONhC34",
+                                "username": "gmdevcr"
+                            }
+                        }
+                    },
+                    "type": "docker"
+                },
+                "schemaVersion": "1.1",
+                "systemModules": {
+                    "edgeAgent": {
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-agent:1.2",
+                            "createOptions": "{}"
+                        },
+                        "type": "docker"
+                    },
+                    "edgeHub": {
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-hub:1.2",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]}}}"
+                        },
+                        "type": "docker",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                }
+            }
+        },
+        "$edgeHub": {
+            "properties.desired": {
+                "routes": {
+                    "opcua-publisher": "FROM /messages/* INTO $upstream",
+                    "devplus-dev": "FROM /messages/* INTO $upstream"
+                },
+                "schemaVersion": "1.1",
+                "storeAndForwardConfiguration": {
+                    "timeToLiveSecs": 7200
+                }
+            }
+        },
+        "opcua-publisher": {
+            "properties.desired": {
+                "DefaultPublishInterval": 1000,
+                "DefaultSampleInterval": 1000
+            }
+        },
+        "devplus-dev": {
+            "properties.desired": {}
+        }
+    }
+}
