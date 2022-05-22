@@ -1,3 +1,6 @@
 [submodule "src/connex-edge/opc"]
 	path = src/connex-edge/opc
 	url = https://github.com/hguomin/az-iiot-opc-e2e-solution.git
+[submodule ".\\src\\connex-edge\\modbus"]
+	path = .\\src\\connex-edge\\modbus
+	url = https://github.com/hguomin/aziot-edge-modbus.git
