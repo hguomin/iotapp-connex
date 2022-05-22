@@ -1,0 +1,53 @@
+spring:
+  cloud:
+    stream:
+      binders:
+        iothub-builtin-endpoint:
+          type: eventhub
+          default-candidate: false
+          environment:
+            spring:
+              cloud:
+                azure:
+                  eventhub:
+                    connection-string: 
+                    checkpoint-storage-account:   #storage account name
+                    checkpoint-access-key: 
+                    checkpoint-container:   #storage container name
+        websocket:
+          type: websocket
+          default-candidate: false
+          #  environment:
+          #   spring:
+          #    cloud:
+          #      websocket:
+          #        endpoint: /ws
+      #Functions
+      function:
+        definition: receive;websocketTest;websocketMessages
+      
+      #Bindings
+      bindings:
+        receive-in-0:
+          binder: iothub-builtin-endpoint
+          destination: connex-iothub #iot/event hub name
+          group: telemetry
+        websocketTest-in-0:
+          binder: websocket
+          destination: websocket
+        websocketMessages-out-0:
+          binder: websocket
+          destination: websocket
+
+    websocket:
+      endpoint: /ws
+
+  integration:
+    poller:
+      fixed-delay: 2  #interval for the poller to call message producer
+
+azure:
+  iothub:
+    connection-string: 
+    host-name: 
+    sas-key: 
