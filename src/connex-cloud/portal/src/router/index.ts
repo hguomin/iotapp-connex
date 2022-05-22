@@ -32,12 +32,24 @@ const router = createRouter({
           component: () => import('../views/edge-gateways/HomeView.vue'),
           children: [
             {
+              path: 'overview',
+              component: () => import('../views/edge-gateways/OverviewView.vue')
+            },
+            {
               path: 'data-sources/list',
               component: () => import('../views/edge-gateways/DataSourcesView.vue')
             },
             {
-              path: 'data-sources/:dataSrcName',
+              path: 'data-sources/opc-ua/:dataSrcName',
               component: () => import('../views/edge-gateways/DataSourceDetailView.vue')
+            },
+            {
+              path: 'data-sources/modbus/:dataSrcName',
+              component: () => import('../views/edge-gateways/DataSourceModbusDetailView.vue')
+            },
+            {
+              path: 'telemetries',
+              component: () => import('../views/edge-gateways/TelemetryView.vue')
             }
           ]
         }

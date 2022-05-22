@@ -11,16 +11,17 @@
     </parent>
     
     <groupId>dev.iotapp.connex</groupId>
-	  <artifactId>connex-cloud</artifactId>
-	  <version>0.0.1-SNAPSHOT</version>
-	  <name>connex-cloud</name>
-	  <description>The cloud applications of Project Connex.</description>
+	    <artifactId>connex-cloud</artifactId>
+	    <version>0.0.1-SNAPSHOT</version>
+        <name>connex-cloud</name>
+	    <description>The cloud applications of Project Connex.</description>
 
     <packaging>pom</packaging>
     
     <modules>
-      <module>application</module>
-      <module>portal</module>
+        <module>application</module>
+        <module>portal</module>
+        <module>libs/spring-cloud-stream-binder-websocket</module>
     </modules>
 
 </project>

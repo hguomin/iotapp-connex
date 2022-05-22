@@ -1,12 +1,8 @@
 {
     "gateways":[
         {
-            "id":"gw-1",
-            "name": "Gateway 1"
-        },
-        {
-            "id":"gw-2",
-            "name": "Gateway 2"
+            "id":"connex-edge-device-01",
+            "name": "Connex edge device 01"
         }
     ]
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 
-function getUrls(id: string, page: string): string {
+function getUrls(id: string | string[], page: string): string {
   return "/edge-gateways/" + id + "/" + page;
 }
 

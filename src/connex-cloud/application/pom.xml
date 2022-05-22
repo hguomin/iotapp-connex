@@ -7,7 +7,7 @@
 	  	<artifactId>connex-cloud</artifactId>
 	  	<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<groupId>dev.iotapp.connex</groupId>
+
 	<artifactId>connex-cloud-application</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
@@ -17,6 +17,13 @@
   	</properties>
 
 	<dependencies>
+
+		<!--azure event hub binder for spring cloud stream-->
+		<dependency>
+			<groupId>com.azure.spring</groupId>
+			<artifactId>azure-spring-cloud-stream-binder-eventhubs</artifactId>
+			<version>2.8.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -38,13 +45,25 @@
 
 		<dependency>
 			<groupId>dev.iotapp.connex</groupId>
-			<artifactId>connex-cloud-portal</artifactId>
+			<artifactId>spring-cloud-stream-binder-websocket</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+
+		<!--dependency>
+			<groupId>dev.iotapp.connex</groupId>
+			<artifactId>connex-cloud-portal</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
@@ -58,8 +77,20 @@
 			<artifactId>fastjson</artifactId>
 			<version>2.0.2.graal</version>
 		</dependency>
-
 	</dependencies>
+
+	<!--For Azure SDK-->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.azure</groupId>
+				<artifactId>azure-sdk-bom</artifactId>
+				<version>1.0.3</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
 		<plugins>

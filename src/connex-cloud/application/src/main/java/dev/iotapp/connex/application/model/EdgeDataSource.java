@@ -8,14 +8,13 @@ public class EdgeDataSource {
     private String type;
     private String tags;
     private String description;
-    private Map<String, Object> configuration;
+    private Map<String, Object> configuration = new HashMap<>();
 
     public EdgeDataSource() {
         this.name = "";
         this.type = "";
         this.tags = "";
         this.description = "";
-        this.configuration = new HashMap<>();
     }
 
     public EdgeDataSource(String name, String type, String tags, String description, Map<String, Object> configuration) {
@@ -23,7 +22,10 @@ public class EdgeDataSource {
         this.type = type;
         this.tags = tags;
         this.description = description;
-        this.configuration = configuration;
+
+        configuration.forEach((k, v) -> {
+            this.configuration.put(k, v);
+        });
     }
 
     public void setName(String name) {
@@ -64,5 +66,13 @@ public class EdgeDataSource {
 
     public Map<String, Object> getConfiguration() {
         return this.configuration;
+    }
+
+    public void copyTo(Map<String, Object> target) {
+        target.put("name", this.name);
+        target.put("type", this.type);
+        target.put("tags", this.tags);
+        target.put("description", this.description);
+        this.configuration.forEach((k, v) -> ((Map<String, Object>)target.get("configuration")).put(k, v));
     }
 }

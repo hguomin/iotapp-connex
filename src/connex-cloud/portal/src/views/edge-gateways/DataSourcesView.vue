@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onActivated } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { ref, reactive, useAttrs, onMounted, onActivated } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import axios from 'axios'
+
+const route = useRoute();
 
 const ds = {
     "dataSources":[
@@ -23,9 +25,11 @@ const ds = {
 };
 
 let open = ref(false);
+let datas: any[] = [{}];
+let dataSrcs = reactive(datas);
 
 onMounted(() => {
-    console.log("mounted");
+    getDataSources(route.params.id as string);
 });
 
 function toggle() {
@@ -36,33 +40,50 @@ function getDeviceList() {
     const url = `http://localhost:8080/api/devices`;
     let response = axios.get(url)
         .then( r => {
+            r.data.forEach((e: Object) => {
+                dataSrcs.push(e);
+            });
             console.log(r.data);
         })
         .catch( e => console.log("Error: " + e) );
 }
 
-function addDataSourceModuel() {
-    const url = `http://localhost:8080/api/devices/gw1/modules`
-    const data = {
-        name: "my-opcua",
-        type: "opcua",
-        tags: "tag1;tag2",
-        description: "my description"
-    };
+let dataSrc = {
+    name: "",
+    type: "",
+    tags: "",
+    description: ""
+};
 
-    let response = axios.post(url, JSON.stringify(data), {
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
-  })
+function getDataSources(deviceId: string | string[]) {
+    const url = `http://localhost:8080/api/devices/` + deviceId +`/dataSources`;
+    let response = axios.get(url)
+        .then(r => {
+            dataSrcs.length = 0;
+            r.data.forEach((e: Object) => {
+                dataSrcs.push(e);
+            });
+        })
+        .catch(e => console.log("Error: " + e));
+}
+
+function addDataSource(deviceId: string | string[]) {
+    const url = `http://localhost:8080/api/devices/` + deviceId +`/dataSources`
+    let response = axios.post(url, JSON.stringify(dataSrc), {
+        headers: {
+            'Content-Type': 'application/json;charset=UTF-8'
+        }
+    })
     .then(r => {
         console.log(r.data)
+        toggle();
+        getDataSources(deviceId);
     })
     .catch(e => console.log("Error: " + e));
 }
 
-function getUrls(id: string, dataSrcName: string): string {
-  return "/edge-gateways/" + id + "/data-sources/" + dataSrcName;
+function getUrls(id: string | string[], driverType: string, dataSrcName: string): string {
+  return "/edge-gateways/" + id + "/data-sources/" + driverType + "/" + dataSrcName;
 }
 
 
@@ -114,16 +135,16 @@ function getUrls(id: string, dataSrcName: string): string {
                     <th class="text-left px-5">Tags</th>
                     <th class="text-left px-5">Description</th>
                 </tr>
-                <tr v-for="d in ds.dataSources" :key="d.name" class="border-b h-10 hover:bg-slate-200 ">
+                <tr v-for="d in dataSrcs" :key="d.name" class="border-b h-10 hover:bg-slate-200 ">
                     <td class="w-6">
                         <span class="flex justify-center">
                             <input type="checkbox" class="checkbox" />
                         </span>
                     </td>
                     <td class="px-5">
-                        <router-link :to="getUrls($route.params.id, d.name)" class="text-blue-600 underline decoration-blue-600 ">{{ d.name }}</router-link>
+                        <router-link :to="getUrls($route.params.id, d.type, d.name)" class="text-blue-600 underline decoration-blue-600 ">{{ d.name }}</router-link>
                     </td>
-                    <td class="px-5">{{ d.driver }}</td>
+                    <td class="px-5">{{ d.type }}</td>
                     <td class="px-5">May 7, 2022 3:33 PM</td>
                     <td class="px-5">{{ d.tags }}</td>
                     <td class="px-5">{{ d.description }}</td>
@@ -148,44 +169,44 @@ function getUrls(id: string, dataSrcName: string): string {
     <!--Side panel-->
     <div id="side-editor-panel" :class="['absolute h-full right-0 overflow-hidder bg-slate-50 shadow-2xl transition duration-1000', open? 'flex' : 'hidden']">
         <div class="flex flex-col flex-auto">
-            <form class="flex flex-col flex-auto" @submit.prevent="addDataSourceModuel()">
-            <div class="flex flex-col border-b border-gray-400 px-5 py-1">
-                <div class="flex flex-auto">
+            <form class="flex flex-col flex-auto" @submit.prevent="addDataSource($route.params.id)">
+                <div class="flex flex-col border-b border-gray-400 px-5 py-1">
+                    <div class="flex flex-auto">
+                        <span class="grow"></span>
+                        <button class="justify-items-end hover:bg-slate-100 p-1">
+                            <i class="las la-times la-lg"></i>
+                        </button>
+                    </div>
+                    <h1 class="grow text-lg font-semibold ">Add data source</h1>    
+                    <p class="text-sm text-gray-600">Setup data collection module and get data from where it is produced.</p>
+                </div>
+                <div class="grow flex flex-col px-5 py-5 space-y-5">
+                    <div class="flex flex-col">
+                        <label for="name" class="font-semibold pb-1.5">Name <span class="text-red-600">*</span></label>
+                        <input id="name" v-model="dataSrc.name" class="p-1 border border-gray-400 outline-none" />
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="driver-type" class="font-semibold pb-1.5">Driver type <span class="text-red-600">*</span></label>
+                        <select id="driver-type" v-model="dataSrc.type" class="p-1 border border-gray-400 outline-none">
+                            <option value="opc-ua" class="outline-none">OpcUa</option>
+                            <option value="modbus" class="outline-none">Modbus</option>
+                            <option value="ethnet-ip" class="outline-none">Ethernet/IP</option>
+                            <option value="bacnet" class="outline-none">BacNet</option>
+                        </select>
+                    </div>     
+                    <div class="flex flex-col">
+                        <label for="tags" class="font-semibold pb-1.5">Tags</label>
+                        <input id="tags" v-model="dataSrc.tags" class="p-1 border border-gray-400 outline-none" />
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="description" class="font-semibold pb-1.5">Description <span class="text-red-600">*</span></label>
+                        <textarea id="description" v-model="dataSrc.description" class="p-1 border border-gray-400 outline-none"></textarea>
+                    </div>           
                     <span class="grow"></span>
-                    <button class="justify-items-end hover:bg-slate-100 p-1">
-                        <i class="las la-times la-lg"></i>
-                    </button>
                 </div>
-                <h1 class="grow text-lg font-semibold ">Add data source</h1>    
-                <p class="text-sm text-gray-600">Setup data collection module and get data from where it is produced.</p>
-            </div>
-            <div class="grow flex flex-col px-5 py-5 space-y-5">
-                <div class="flex flex-col">
-                    <label for="name" class="font-semibold pb-1.5">Name <span class="text-red-600">*</span></label>
-                    <input id="name" class="p-1 border border-gray-400 outline-none" />
+                <div class="flex">
+                    <button class="w-20  py-1 border border-gray-600 bg-slate-800 text-white mb-5 ml-5">Save</button>
                 </div>
-                <div class="flex flex-col">
-                    <label for="driver-type" class="font-semibold pb-1.5">Driver type <span class="text-red-600">*</span></label>
-                    <select id="driver-type" class="p-1 border border-gray-400 outline-none">
-                        <option value="opc-ua" class="outline-none">OPC UA</option>
-                        <option value="modbus" class="outline-none">Modbus</option>
-                        <option value="ethnet-ip" class="outline-none">Ethnet/IP</option>
-                        <option value="bacnet" class="outline-none">BACNET</option>
-                    </select>
-                </div>     
-                <div class="flex flex-col">
-                    <label for="tags" class="font-semibold pb-1.5">Tags</label>
-                    <input id="tags" class="p-1 border border-gray-400 outline-none" />
-                </div>
-                <div class="flex flex-col">
-                    <label for="description" class="font-semibold pb-1.5">Description <span class="text-red-600">*</span></label>
-                    <textarea id="description" class="p-1 border border-gray-400 outline-none"></textarea>
-                </div>           
-                <span class="grow"></span>
-            </div>
-            <div class="flex">
-                <button class="w-20  py-1 border border-gray-600 bg-slate-800 text-white mb-5 ml-5">Save</button>
-            </div>
             </form>
         </div>
     </div>

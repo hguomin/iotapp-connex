@@ -55,5 +55,19 @@ https://www.baeldung.com/spring-load-resource-as-string
 ## Vue form to submit create operation  
 https://www.vuemastery.com/courses/intro-to-vue-3/forms-and-v-model-vue3/
 
+
+## Telemetry Chart   
+https://vue-chartjs.org/guide/#introduction  
+
+
+## Modbus tools  
+https://blog.csdn.net/xfx_1994/article/details/115618043  
+https://www.dalescott.net/modbus-development/  
+
+## In VUE, use mapped type instead of Map
+https://timmousk.com/blog/typescript-map/   
+https://blog.csdn.net/sinat_35626559/article/details/113869585
+https://trungk18.com/experience/how-to-iterate-over-objects-in-typescript/  
+  
 ## Other references:  
 [VUE geting started](https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/)

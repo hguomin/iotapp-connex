@@ -1,0 +1,12 @@
+{
+    "gateways":[
+        {
+            "id":"gm-dev-iotedge-device",
+            "name": "IoT Edge dev device"
+        },
+        {
+            "id":"aden-edge-device",
+            "name": "Aden edge device"
+        }
+    ]
+}

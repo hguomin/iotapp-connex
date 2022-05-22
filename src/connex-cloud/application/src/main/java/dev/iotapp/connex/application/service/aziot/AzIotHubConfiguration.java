@@ -1,6 +1,5 @@
 package dev.iotapp.connex.application.service.aziot;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,17 +19,42 @@ import com.microsoft.azure.sdk.iot.service.methods.DirectMethodsClient;
 import com.microsoft.azure.sdk.iot.service.registry.RegistryClient;
 import com.microsoft.azure.sdk.iot.service.twin.TwinClient;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.FileCopyUtils;
 
 @Configuration
+@ConfigurationProperties(prefix = "azure.iothub")
 public class AzIotHubConfiguration {
-    private String connectionString = "";
-    private String iotHubHostName = "";
-    private String iotHubSasKey = "";
+    private String connectionString;
+    private String hostName;
+    private String sasKey;
+
+    public String getConnectionString() {
+        return this.connectionString;
+    }
+
+    public void setConnectionString(String connectionString) {
+        this.connectionString = connectionString;
+    }
+
+    public String getHostName() {
+        return this.hostName;
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
+
+    public String getSasKey() {
+        return this.sasKey;
+    }
+
+    public void setSasKey(String sasKey) {
+        this.sasKey = sasKey;
+    }
 
     @Bean
     public IotHubConnectionString iotHubConnectionString() {
@@ -55,15 +79,15 @@ public class AzIotHubConfiguration {
     @Bean DirectMethodsClient iotHubDirectMethodClient() {
         return new DirectMethodsClient(this.connectionString);
     }
-
+    
     @Bean
     public AzSasToken iotHubSasToken() throws Exception {
-        String resourceUri = this.iotHubHostName;
+        String resourceUri = this.hostName;
         // Token will expire in one hour
         long expiry = Instant.now().getEpochSecond() + 3600;
 
         String stringToSign = URLEncoder.encode(resourceUri, StandardCharsets.UTF_8.toString()) + "\n" + expiry;
-        byte[] decodedKey = Base64.getDecoder().decode(this.iotHubSasKey);
+        byte[] decodedKey = Base64.getDecoder().decode(this.sasKey);
 
         Mac sha256HMAC = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKey = new SecretKeySpec(decodedKey, "HmacSHA256");
