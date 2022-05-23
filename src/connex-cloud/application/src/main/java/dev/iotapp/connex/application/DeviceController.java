@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.iotapp.connex.application.model.EdgeDataDriver;
+import dev.iotapp.connex.application.model.EdgeDataConnector;
 import dev.iotapp.connex.application.model.EdgeDataSource;
 import dev.iotapp.connex.application.model.IotDevice;
 import dev.iotapp.connex.application.service.IotHubService;
@@ -43,8 +43,13 @@ public class DeviceController {
     }
 
     @PostMapping("/{deviceId}/modules")
-    public EdgeDataDriver deployEdgeModule(@RequestBody EdgeDataDriver driver) {
+    public EdgeDataConnector deployEdgeModule(@RequestBody EdgeDataConnector driver) {
         return this.iotHubService.deployEdgeModule(driver);
+    }
+
+    @GetMapping("/{deviceId}/modules")
+    public List<EdgeDataConnector> getEdgeModules(@PathVariable String deviceId) {
+        return this.iotHubService.getEdgeModules(deviceId);
     }
 
     @GetMapping("/{deviceId}/dataSources")
@@ -54,12 +59,7 @@ public class DeviceController {
 
     @PostMapping("/{deviceId}/dataSources")
     public EdgeDataSource addEdgeDataSource(@PathVariable String deviceId, @RequestBody EdgeDataSource ds) {
-
-        if(this.iotHubService.addEdgeDataSource(deviceId, ds)) {
-            return ds;
-        }
-
-        return null;
+        return this.iotHubService.addEdgeDataSource(deviceId, ds);
     }
 
     @PutMapping("/{deviceId}/dataSources")
@@ -67,13 +67,9 @@ public class DeviceController {
         this.iotHubService.updateEdgeDataSource(deviceId, ds);
     }
 
-    @GetMapping("/{deviceId}/dataSources/{dataSrcType}/{dataSrcName}")
-    public EdgeDataSource getDataSource(@PathVariable String deviceId, @PathVariable String dataSrcType,  @PathVariable String dataSrcName) {
-        return this.iotHubService.getDataSource(deviceId, dataSrcType, dataSrcName);
+    @GetMapping("/{deviceId}/dataSources/{connectorType}/{connector}/{dataSrcName}")
+    public EdgeDataSource getDataSource(@PathVariable String deviceId, @PathVariable String connectorType, @PathVariable String connector, @PathVariable String dataSrcName) {
+        return this.iotHubService.getDataSource(deviceId, connectorType, connector, dataSrcName);
     }
 
-    @PostMapping("/{deviceId}/dataSources/{dataSrcType}/{dataSrcName}/config")
-    public void setEdgeDataSourceConfiguration(@PathVariable String deviceId, @PathVariable String dataSrcType,  @PathVariable String dataSrcName, @RequestBody Map<String, Object> settings) {
-        this.iotHubService.setEdgeDataSourceConfiguration(deviceId, dataSrcType, dataSrcName, settings);
-    }
 }

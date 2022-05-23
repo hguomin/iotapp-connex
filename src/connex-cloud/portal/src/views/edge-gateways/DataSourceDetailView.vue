@@ -6,7 +6,7 @@
                 <span class="mr-1"><i class="las la-save la-lg"></i></span>
                 <span>Save</span>
             </button>
-            <button class="px-1 py-2 hover:bg-slate-200">
+            <button @click="fetchDataSource()" class="px-1 py-2 hover:bg-slate-200">
                 <span class="mr-1"><i class="las la-sync la-lg"></i></span>
                 <span>Refresh</span>
             </button>
@@ -25,22 +25,22 @@
                                 <span>{{dataSrcViewModel.data.name}}</span>
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-semibold">Driver type</span>
+                                <span class="font-semibold">Connector type</span>
                                 <span>{{dataSrcViewModel.data.type}}</span>
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-semibold">Tags</span>
-                                <span>{{dataSrcViewModel.data.tags}}</span>
+                                <span class="font-semibold">Connector name</span>
+                                <span>{{dataSrcViewModel.data.connector}}</span>
                             </div>
                         </div>
                         <div class="grow flex flex-col space-y-3 py-2">
                             <div class="flex flex-col">
-                                <span class="font-semibold">Created by</span>
-                                <span>Guomin Huang</span>
+                                <span class="font-semibold">Tags</span>
+                                <span>{{dataSrcViewModel.data.tags}}</span>
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-semibold">Created by</span>
-                                <span>May 7, 2022 10:41AM</span>
+                                <span class="font-semibold">Created</span>
+                                <span>---</span>
                             </div>
                         </div>
                     </div>
@@ -265,6 +265,7 @@ let driverDetailsEditor = ref(false)
 //General data interfaces
 interface EdgeDataSource<TConf> {
     name: string;
+    connector: string;
     type: string;
     tags: string;
     description: string;
@@ -321,6 +322,7 @@ function initDataSourceConfiguration(): OpcDataSourceConfiguration {
 function initDataSource(): OpcDataSource {
     return {
         name: "",
+        connector: "",
         type: "",
         tags: "",
         description: "",
@@ -350,7 +352,7 @@ onMounted(() => {
 })
 
 function fetchDataSource() {
-    const url = `http://localhost:8080/api/devices/` + route.params.id + "/dataSources/opc-ua/" + route.params.dataSrcName;
+    const url = `http://localhost:8080/api/devices/` + route.params.id + "/dataSources/opc-ua/" + route.params.connector + "/" + route.params.dataSrcName;
     axios.get(url)
         .then(r => {
             if( 'object' === typeof r.data) {
@@ -362,14 +364,20 @@ function fetchDataSource() {
                 //for driver configuration
                 Object.assign(dataSrcConfEditViewModel.data, r.data.configuration);
 
+                for(let k in dataPointListViewModel) {
+                    delete dataPointListViewModel[k];
+                }
+                
                 //for data point list
-                r.data.configuration.OpcNodes.forEach((node: any) => {
-                    dataPointListViewModel[node.Id] = {
-                        isSelected: false,
-                        name: node.Id,
-                        data: node
-                    };
-                });
+                if(r.data.configuration.OpcNodes) {
+                    r.data.configuration.OpcNodes.forEach((node: any) => {
+                        dataPointListViewModel[node.Id] = {
+                            isSelected: false,
+                            name: node.Id,
+                            data: node
+                        };
+                    });
+                }
             }
             else {
                 console.log("No such data source in the module, or no this kind of connector was deployed.");

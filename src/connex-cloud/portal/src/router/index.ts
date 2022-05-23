@@ -40,11 +40,11 @@ const router = createRouter({
               component: () => import('../views/edge-gateways/DataSourcesView.vue')
             },
             {
-              path: 'data-sources/opc-ua/:dataSrcName',
+              path: 'data-sources/opc-ua/:connector/:dataSrcName',
               component: () => import('../views/edge-gateways/DataSourceDetailView.vue')
             },
             {
-              path: 'data-sources/modbus/:dataSrcName',
+              path: 'data-sources/modbus/:connector/:dataSrcName',
               component: () => import('../views/edge-gateways/DataSourceModbusDetailView.vue')
             },
             {

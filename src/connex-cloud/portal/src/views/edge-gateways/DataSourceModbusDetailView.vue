@@ -8,7 +8,7 @@
         <span class="mr-1"><i class="las la-save la-lg"></i></span>
         <span>Save</span>
       </button>
-      <button class="px-1 py-2 hover:bg-slate-200">
+      <button @click="fetchDataSource()" class="px-1 py-2 hover:bg-slate-200">
         <span class="mr-1"><i class="las la-sync la-lg"></i></span>
         <span>Refresh</span>
       </button>
@@ -418,7 +418,7 @@ import { onBeforeMount, onMounted, reactive, ref, } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import axios from 'axios'
 
-let driverType = 'modbus';
+let connectorType = 'modbus';
 
 let route = useRoute();
 
@@ -428,6 +428,7 @@ let driverDetailsEditor = ref(false)
 //General data interfaces
 interface EdgeDataSource<TConf> {
     name: string,
+    connector: string,
     type: string,
     tags: string,
     description: string,
@@ -519,6 +520,7 @@ function initDataSourceConfiguration(): ModbusDataSourceConfiguration {
 function initDataSource(): ModbusDataSource {
     return {
         name: "",
+        connector: "",
         type: "",
         tags: "",
         description: "",
@@ -531,7 +533,7 @@ onMounted(() => {
 })
 
 function fetchDataSource() {
-    const url = `http://localhost:8080/api/devices/` + route.params.id + '/dataSources/' + driverType + '/' + route.params.dataSrcName;
+    const url = `http://localhost:8080/api/devices/` + route.params.id + '/dataSources/' + connectorType + '/'  + route.params.connector + "/" + route.params.dataSrcName;;
     axios.get(url)
         .then(r => {
             if( 'object' === typeof r.data) {
@@ -542,13 +544,19 @@ function fetchDataSource() {
                 //for driver configuration
                 Object.assign(dataSrcConfEditViewModel.data, r.data.configuration);
 
+                for(let k in dataPointListViewModel) {
+                    delete dataPointListViewModel[k];
+                }
+                
                 //for data point list
-                for( let k in r.data.configuration.Operations) {
-                    dataPointListViewModel[k] = {
-                        isSelected: false,
-                        name: k,
-                        data: r.data.configuration.Operations[k]
-                    }
+                if(r.data.configuration.Operations) {
+                  for( let k in r.data.configuration.Operations) {
+                      dataPointListViewModel[k] = {
+                          isSelected: false,
+                          name: k,
+                          data: r.data.configuration.Operations[k]
+                      }
+                  }
                 }
             }
             else {

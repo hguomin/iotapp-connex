@@ -3,7 +3,55 @@ import { ref, reactive, useAttrs, onMounted, onActivated } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import axios from 'axios'
 
+//General data interfaces
+interface EdgeDataConnector {
+    deviceId: string;
+    type: string;
+    id: string;
+    status?: string;
+    image?: string;
+    version?: string;
+};
+
+interface EdgeDataSource<TConf> {
+    name: string;
+    type: string;
+    connector: string,
+    tags: string;
+    description: string;
+    configuration: TConf
+};
+
+interface DataViewModel<TData> {
+    isSelected?: boolean;
+    name?: string;
+    data: TData
+};
+
+interface DataListViewModel<TData> {
+    [key: string]: DataViewModel<TData>
+};
+
+
 const route = useRoute();
+const deviceId:string = route.params.id as string;
+
+let connectorsViewModel: DataListViewModel<EdgeDataConnector> = reactive({});
+let dataSrcAddViewModel: DataViewModel<EdgeDataSource<Object>> = reactive({
+    data: initDataSrc()
+});
+let dataSrcListViewModel: DataListViewModel<EdgeDataSource<Object>> = reactive({});
+
+function initDataSrc() {
+    return {
+        name: "",
+        type: "",
+        connector: "",
+        tags: "",
+        description: "",
+        configuration: {}
+    }
+}
 
 const ds = {
     "dataSources":[
@@ -29,61 +77,82 @@ let datas: any[] = [{}];
 let dataSrcs = reactive(datas);
 
 onMounted(() => {
-    getDataSources(route.params.id as string);
+    fetchDataConnectors();
+    fetchDataSources(deviceId);
 });
 
 function toggle() {
     open.value = !open.value;
 }
 
-function getDeviceList() {
-    const url = `http://localhost:8080/api/devices`;
-    let response = axios.get(url)
-        .then( r => {
-            r.data.forEach((e: Object) => {
-                dataSrcs.push(e);
-            });
-            console.log(r.data);
-        })
-        .catch( e => console.log("Error: " + e) );
+function fetchDataConnectors() {
+    const url: string = `http://localhost:8080/api/devices/` + deviceId + "/modules";
+    let response = axios.get(url).then(r => {
+                            console.log("fetchDataConnectors:");
+                            console.log(r.data);
+
+                            if(r.data instanceof Array) {
+                                for(const k in connectorsViewModel) {
+                                    delete connectorsViewModel[k];
+                                }
+                                for(let c of r.data) {
+                                    connectorsViewModel[c.id] = {
+                                        isSelected: false,
+                                        name: c.id,
+                                        data: c
+                                    };
+                                }
+                            }
+                        })
+                        .catch(e => console.log("fetchDataConnectors - error: " + e));
 }
 
-let dataSrc = {
-    name: "",
-    type: "",
-    tags: "",
-    description: ""
-};
-
-function getDataSources(deviceId: string | string[]) {
+function fetchDataSources(deviceId: string | string[]) {
     const url = `http://localhost:8080/api/devices/` + deviceId +`/dataSources`;
     let response = axios.get(url)
         .then(r => {
-            dataSrcs.length = 0;
-            r.data.forEach((e: Object) => {
-                dataSrcs.push(e);
-            });
+            console.log("fetchDataSources:");
+            console.log(r.data);
+            if(r.data instanceof Array) {
+                for(let k in dataSrcListViewModel) {
+                    delete dataSrcListViewModel[k];
+                }
+
+                for(let ds of r.data) {
+                    dataSrcListViewModel[ds.name] = {
+                        isSelected: false,
+                        name: ds.name,
+                        data: ds
+                    }
+                }
+            }
         })
-        .catch(e => console.log("Error: " + e));
+        .catch(e => console.log("fetchDataSources - Error: " + e));
 }
 
 function addDataSource(deviceId: string | string[]) {
-    const url = `http://localhost:8080/api/devices/` + deviceId +`/dataSources`
-    let response = axios.post(url, JSON.stringify(dataSrc), {
+    const url = `http://localhost:8080/api/devices/` + deviceId +`/dataSources`;
+
+    dataSrcAddViewModel.data.type = connectorsViewModel[dataSrcAddViewModel.data.connector].data.type;
+     
+    let response = axios.post(url, JSON.stringify(dataSrcAddViewModel.data), {
         headers: {
             'Content-Type': 'application/json;charset=UTF-8'
         }
     })
     .then(r => {
+        console.log("addDataSource:");
         console.log(r.data)
         toggle();
-        getDataSources(deviceId);
+        dataSrcAddViewModel.data = initDataSrc();
+
+        fetchDataSources(deviceId);
     })
     .catch(e => console.log("Error: " + e));
 }
 
-function getUrls(id: string | string[], driverType: string, dataSrcName: string): string {
-  return "/edge-gateways/" + id + "/data-sources/" + driverType + "/" + dataSrcName;
+function getUrls(id: string | string[], connectorType: string, connector:string, dataSrcName: string): string {
+  return "/edge-gateways/" + id + "/data-sources/" + connectorType + "/" + connector + "/" + dataSrcName;
 }
 
 
@@ -99,7 +168,7 @@ function getUrls(id: string | string[], driverType: string, dataSrcName: string)
                 <span class="mr-1"><i class="las la-plus la-lg"></i></span>
                 <span>Add</span>
             </button>
-            <button @click="getDeviceList()" class="flex items-center pl-2 pr-3 py-1.5 rounded-sm hover:bg-gray-200">
+            <button class="flex items-center pl-2 pr-3 py-1.5 rounded-sm hover:bg-gray-200">
                 <span class="mr-1"><i class="lar la-edit la-lg"></i></span>
                 <span>Edit</span>
             </button>
@@ -107,7 +176,7 @@ function getUrls(id: string | string[], driverType: string, dataSrcName: string)
                 <span class="mr-1"><i class="las la-trash la-lg"></i></span>
                 <span>Delete</span>
             </button>
-            <button class="flex items-center pl-2 pr-3 py-1.5 rounded-sm hover:bg-gray-200">
+            <button @click="fetchDataSources(deviceId)" class="flex items-center pl-2 pr-3 py-1.5 rounded-sm hover:bg-gray-200">
                 <span class="mr-1"><i class="las la-sync la-lg"></i></span>
                 <span>Refresh</span>
             </button>
@@ -130,50 +199,36 @@ function getUrls(id: string | string[], driverType: string, dataSrcName: string)
                         </span>
                     </th>
                     <th class="text-left px-5 min-w-max">Name</th>
-                    <th class="text-left px-5">Driver Type</th>
-                    <th class="text-left px-5">Created</th>
+                    <th class="text-left px-5">Connector</th>
+                    <th class="text-left px-5">Connector Type</th>
                     <th class="text-left px-5">Tags</th>
                     <th class="text-left px-5">Description</th>
                 </tr>
-                <tr v-for="d in dataSrcs" :key="d.name" class="border-b h-10 hover:bg-slate-200 ">
+                <tr v-for="(v, k, i) in dataSrcListViewModel" :key="i" class="border-b h-10 hover:bg-slate-200 ">
                     <td class="w-6">
                         <span class="flex justify-center">
-                            <input type="checkbox" class="checkbox" />
+                            <input v-model="v.isSelected" type="checkbox" class="checkbox" />
                         </span>
                     </td>
                     <td class="px-5">
-                        <router-link :to="getUrls($route.params.id, d.type, d.name)" class="text-blue-600 underline decoration-blue-600 ">{{ d.name }}</router-link>
+                        <router-link :to="getUrls(deviceId, v.data.type, v.data.connector, v.data.name)" class="text-blue-600 underline decoration-blue-600 ">{{ v.data.name }}</router-link>
                     </td>
-                    <td class="px-5">{{ d.type }}</td>
-                    <td class="px-5">May 7, 2022 3:33 PM</td>
-                    <td class="px-5">{{ d.tags }}</td>
-                    <td class="px-5">{{ d.description }}</td>
+                    <td class="px-5">{{ v.data.connector }}</td>
+                    <td class="px-5">{{ v.data.type}}</td>
+                    <td class="px-5">{{ v.data.tags }}</td>
+                    <td class="px-5">{{ v.data.description }}</td>
                 </tr>
-                <!--tr class="border-b h-10 hover:bg-slate-200 ">
-                    <td class="w-6">
-                        <span class="flex justify-center">
-                            <input type="checkbox" class="checkbox" />
-                        </span>
-                    </td>
-                    <td class="px-5">
-                        <router-link :to="getUrls($route.params.id, 'opcda-data2')" class="text-blue-600 underline decoration-blue-600 ">opcda-data-2</router-link>
-                    </td>
-                    <td class="px-5">OPC UA</td>
-                    <td class="px-5">May 7, 2022 3:33 PM</td>
-                    <td class="px-5">OPC DA, OPC UA</td>
-                    <td class="px-5">This is the data sources for geting OPC DA data</td>
-                </tr-->
             </table>
         </div>
     </div>
     <!--Side panel-->
     <div id="side-editor-panel" :class="['absolute h-full right-0 overflow-hidder bg-slate-50 shadow-2xl transition duration-1000', open? 'flex' : 'hidden']">
         <div class="flex flex-col flex-auto">
-            <form class="flex flex-col flex-auto" @submit.prevent="addDataSource($route.params.id)">
+            <!--form class="flex flex-col flex-auto" @submit.prevent="addDataSource($route.params.id)"-->
                 <div class="flex flex-col border-b border-gray-400 px-5 py-1">
                     <div class="flex flex-auto">
                         <span class="grow"></span>
-                        <button class="justify-items-end hover:bg-slate-100 p-1">
+                        <button @click="toggle()" class="justify-items-end hover:bg-slate-100 p-1">
                             <i class="las la-times la-lg"></i>
                         </button>
                     </div>
@@ -183,31 +238,39 @@ function getUrls(id: string | string[], driverType: string, dataSrcName: string)
                 <div class="grow flex flex-col px-5 py-5 space-y-5">
                     <div class="flex flex-col">
                         <label for="name" class="font-semibold pb-1.5">Name <span class="text-red-600">*</span></label>
-                        <input id="name" v-model="dataSrc.name" class="p-1 border border-gray-400 outline-none" />
+                        <input id="name" v-model="dataSrcAddViewModel.data.name" class="p-1 border border-gray-400 outline-none" />
                     </div>
                     <div class="flex flex-col">
-                        <label for="driver-type" class="font-semibold pb-1.5">Driver type <span class="text-red-600">*</span></label>
+                        <label for="driver-type" class="font-semibold pb-1.5">Connector<span class="text-red-600">*</span></label>
+                        <select id="driver-type" v-model="dataSrcAddViewModel.data.connector" class="p-1 border border-gray-400 outline-none">
+                            <option v-for="(v, k, i) in connectorsViewModel" :key="i" :value="k" class="outline-none px-2 py-5" >
+                                <span >{{v.data.type}}@<span class="font-semibold">{{v.data.id}}</span></span> 
+                            </option>
+                        </select>
+                    </div>   
+                    <!--div class="flex flex-col">
+                        <label for="driver-type" class="font-semibold pb-1.5">Connector type <span class="text-red-600">*</span></label>
                         <select id="driver-type" v-model="dataSrc.type" class="p-1 border border-gray-400 outline-none">
                             <option value="opc-ua" class="outline-none">OpcUa</option>
                             <option value="modbus" class="outline-none">Modbus</option>
                             <option value="ethnet-ip" class="outline-none">Ethernet/IP</option>
                             <option value="bacnet" class="outline-none">BacNet</option>
                         </select>
-                    </div>     
+                    </div-->     
                     <div class="flex flex-col">
                         <label for="tags" class="font-semibold pb-1.5">Tags</label>
-                        <input id="tags" v-model="dataSrc.tags" class="p-1 border border-gray-400 outline-none" />
+                        <input id="tags" v-model="dataSrcAddViewModel.data.tags" class="p-1 border border-gray-400 outline-none" />
                     </div>
                     <div class="flex flex-col">
                         <label for="description" class="font-semibold pb-1.5">Description <span class="text-red-600">*</span></label>
-                        <textarea id="description" v-model="dataSrc.description" class="p-1 border border-gray-400 outline-none"></textarea>
+                        <textarea id="description" v-model="dataSrcAddViewModel.data.description" class="p-1 border border-gray-400 outline-none"></textarea>
                     </div>           
                     <span class="grow"></span>
                 </div>
                 <div class="flex">
-                    <button class="w-20  py-1 border border-gray-600 bg-slate-800 text-white mb-5 ml-5">Save</button>
+                    <button @click="addDataSource(deviceId)" class="w-20  py-1 border border-gray-600 bg-slate-800 text-white mb-5 ml-5">Save</button>
                 </div>
-            </form>
+            <!--/form-->
         </div>
     </div>
   </div>

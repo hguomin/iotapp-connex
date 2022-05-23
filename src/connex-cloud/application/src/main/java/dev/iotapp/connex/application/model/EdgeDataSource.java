@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class EdgeDataSource {
     private String name;
+    private String connector;
     private String type;
     private String tags;
     private String description;
@@ -12,13 +13,15 @@ public class EdgeDataSource {
 
     public EdgeDataSource() {
         this.name = "";
+        this.connector = "";
         this.type = "";
         this.tags = "";
         this.description = "";
     }
 
-    public EdgeDataSource(String name, String type, String tags, String description, Map<String, Object> configuration) {
+    public EdgeDataSource(String name, String connector, String type, String tags, String description, Map<String, Object> configuration) {
         this.name = name;
+        this.connector = connector;
         this.type = type;
         this.tags = tags;
         this.description = description;
@@ -34,6 +37,14 @@ public class EdgeDataSource {
 
     public String getName() {
         return name;
+    }
+
+    public String getConnector() {
+        return connector;
+    }
+
+    public void setConnector(String connector) {
+        this.connector = connector;
     }
 
     public void setType(String type) {
@@ -70,6 +81,7 @@ public class EdgeDataSource {
 
     public void copyTo(Map<String, Object> target) {
         target.put("name", this.name);
+        target.put("connector", this.connector);
         target.put("type", this.type);
         target.put("tags", this.tags);
         target.put("description", this.description);

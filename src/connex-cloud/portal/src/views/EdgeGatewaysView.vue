@@ -7,7 +7,7 @@ function handleClick(gateway: any) {
 }
 
 function getGatewayUrl(id: string): string {
-    return "/edge-gateways/" + id;
+    return "/edge-gateways/" + id + "/overview";
 }
 </script>
 <template>
