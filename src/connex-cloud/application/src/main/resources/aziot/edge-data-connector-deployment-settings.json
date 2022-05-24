@@ -4,7 +4,7 @@
       "desiredProperties": {
         "product": "ConnexEdge",
         "application": "opcua-connector",
-        "dataSource": {}
+        "dataSources": {}
       },
       "containerSettings": {
         "image": "connexcr.azurecr.io/connex-edge/opcua-connector:2.5.6",
@@ -34,7 +34,7 @@
         "dataSources": {}
       },
       "containerSettings": {
-        "image": "",
+        "image": "connexcr.azurecr.io/connex-edge/modbus-connector:1.0",
         "createOptions": "{}",
         "routes": "FROM /messages/* INTO $upstream"
       }

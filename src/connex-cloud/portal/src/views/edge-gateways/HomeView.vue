@@ -17,17 +17,20 @@ function getUrls(id: string | string[], page: string): string {
           <li class="flex flex-col justify-center px-3  hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
             <router-link :to="getUrls($route.params.id, 'overview')" class="font-semibold text-slate-700 ">Overview</router-link>
           </li>
-          <li class="flex flex-col justify-center px-3 bg-gray-300 border-b-2 border-blue-900 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
+          <!--li class="flex flex-col justify-center px-3 bg-gray-300 border-b-2 border-blue-900 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
+            <router-link :to="getUrls($route.params.id, 'data-sources/list')" class="font-semibold text-slate-700 ">Data Sources</router-link>
+          </li-->
+          <li class="flex flex-col justify-center px-3 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
             <router-link :to="getUrls($route.params.id, 'data-sources/list')" class="font-semibold text-slate-700 ">Data Sources</router-link>
           </li>
           <li class="flex flex-col justify-center px-3 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
-            <router-link :to="getUrls($route.params.id, 'configuration')" class="font-semibold text-slate-700 ">Configurations</router-link>
-          </li>
-          <li class="flex flex-col justify-center px-3 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
-            <router-link :to="getUrls($route.params.id, 'telemetries')" class="font-semibold text-slate-700 ">Raw telemetries</router-link>
+            <router-link :to="getUrls($route.params.id, 'telemetries')" class="font-semibold text-slate-700 ">Telemetry</router-link>
           </li>
           <li class="flex flex-col justify-center px-3 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
             <router-link :to="getUrls($route.params.id, 'actions')" class="font-semibold text-slate-700 ">Actions</router-link>
+          </li>
+          <li class="flex flex-col justify-center px-3 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
+            <router-link :to="getUrls($route.params.id, 'configuration')" class="font-semibold text-slate-700 ">Configurations</router-link>
           </li>
           <li class="flex flex-col justify-center px-3 hover:border-b-2 hover:border-slate-900 hover:bg-gray-300 hover:bg-opacity-20">
             <router-link :to="getUrls($route.params.id, 'logs')" class="font-semibold text-slate-700 ">Logs</router-link>

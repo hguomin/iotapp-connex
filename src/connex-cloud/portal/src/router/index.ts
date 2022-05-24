@@ -7,7 +7,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      //component: HomeView
+      component: () => import('../views/EdgeGatewaysView.vue')
     },
     {
       path: '/about',
@@ -50,7 +51,19 @@ const router = createRouter({
             {
               path: 'telemetries',
               component: () => import('../views/edge-gateways/TelemetryView.vue')
-            }
+            },
+            {
+              path: 'configuration',
+              component: () => import('../views/edge-gateways/ConfigurationView.vue')
+            },
+            {
+              path: 'actions',
+              component: () => import('../views/edge-gateways/ActionsView.vue')
+            },
+            {
+              path: 'logs',
+              component: () => import('../views/edge-gateways/LogsView.vue')
+            },
           ]
         }
       ]

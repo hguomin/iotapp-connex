@@ -44,14 +44,14 @@ import HelloWorld from '@/components/HelloWorld.vue'
                   </div>
                 </router-link>
               </li>
-              <li class="px-3 py-2 rounded-sm mb-0.5 hover:bg-slate-700 ">
-                <router-link to="/about" class="block text-slate-200 hover:text-white truncate transition duration-150 active">
+              <!--li class="px-3 py-2 rounded-sm mb-0.5 hover:bg-slate-700 ">
+                <router-link to="/" class="block text-slate-200 hover:text-white truncate transition duration-150 active">
                   <div class="flex items-center">
                       <span class="mr-2"><i class="la la-list-ul la-lg "></i></span>
                       <span class="ml-1 font-medium">Devices</span>
                   </div>
                 </router-link>
-              </li>
+              </li-->
               <li class="px-3 py-2 rounded-sm mb-0.5 hover:bg-slate-700">
                 <router-link to="/edge-gateways" class="block text-slate-200 hover:text-white truncate transition duration-150 active">
                   <div class="flex items-center">

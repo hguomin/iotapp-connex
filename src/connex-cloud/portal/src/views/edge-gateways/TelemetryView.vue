@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
-import SockJS from "sockjs-client/dist/sockjs.js";
+import SockJS  from "sockjs-client/dist/sockjs.js";
+//import SockJS from "sockjs-client"
 import Chart from "chart.js/auto";
+import { Config } from "@/config";
 
 let ws: any;
 let message = ref("");
@@ -31,7 +33,7 @@ onMounted(() => {
           display: true,
           title: {
             display: true,
-            text: "Message Id",
+            text: "Timestamp",
           },
         },
         y: {
@@ -47,7 +49,7 @@ onMounted(() => {
 
   let dataNameToIdMap: Map<string, number> = new Map();
 
-  ws = new SockJS("http://localhost:8080/ws_sockjs");
+  ws = new SockJS(Config.host + "/ws_sockjs");
   ws.onopen = () => {
     console.log("connected.");
     ws.send("hello");
@@ -69,7 +71,7 @@ onMounted(() => {
           label: el.NodeId,
           data: new Array<number>(),
           borderColor: "#4dccf6",
-          //backgroundColor: "#eeeeee",
+          backgroundColor: "#eeeeee",
           //fill: false,
           //cubicInterpolationMode: 'monotone',
           //tension: 0.3
@@ -101,13 +103,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col flex-auto" >
-    <h1>Telemetries</h1>
-
-    <div style="flex"> 
+  <div class="flex flex-col flex-auto p-10" >
+    <div calss="flex"> 
       <canvas id="telemetry-chart"></canvas>
     </div>
-    
-    <div>{{ message }}</div>
   </div>
 </template>

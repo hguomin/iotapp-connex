@@ -254,9 +254,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
-import axios from 'axios'
+import { onMounted, reactive, ref, } from 'vue';
+import { RouterLink, RouterView, useRoute } from 'vue-router';
+import axios from 'axios';
+import { Config } from '@/config';
 
 let route = useRoute();
 let addDataPointEditor = ref(false);
@@ -352,7 +353,7 @@ onMounted(() => {
 })
 
 function fetchDataSource() {
-    const url = `http://localhost:8080/api/devices/` + route.params.id + "/dataSources/opc-ua/" + route.params.connector + "/" + route.params.dataSrcName;
+    const url = Config.host + "/api/devices/" + route.params.id + "/dataSources/opc-ua/" + route.params.connector + "/" + route.params.dataSrcName;
     axios.get(url)
         .then(r => {
             if( 'object' === typeof r.data) {
@@ -389,7 +390,7 @@ function fetchDataSource() {
 }
 
 function saveDataSource() {
-    const url = `http://localhost:8080/api/devices/` + route.params.id +`/dataSources`
+    const url = Config.host + "/api/devices/" + route.params.id + "/dataSources";
 
     let opcNodes: OpcDataPoint[] = [];
     for(let k in dataPointListViewModel) {
@@ -428,23 +429,6 @@ function editDriverDetails() {
     dataSrcViewModel.data.configuration.Password = dataSrcConfEditViewModel.data.Password;
 
     toggleDriverDetailsEditor();
-    /*
-    const url = `http://localhost:8080/api/devices/` + route.params.id + "/dataSources/" + route.params.driverType + "/" + route.params.dataSrcName + "/config";
-
-    let response = axios.post(url, JSON.stringify(driverDetails), {
-        headers: {
-            'Content-Type': 'application/json;charset=UTF-8'
-        }
-    })
-    .then(r => {
-        console.log("Edit driver details ok.")
-    })
-    .catch(e => { 
-        console.log("Error: " + e);
-    });
-    console.log(route.params.id);
-    console.log(route.params.dataSrcName);
-    */
 }
 
 function addDataPoint() {

@@ -417,6 +417,7 @@
 import { onBeforeMount, onMounted, reactive, ref } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import axios from "axios";
+import { Config } from "@/config";
 
 let connectorType = "modbus";
 
@@ -534,7 +535,8 @@ onMounted(() => {
 
 function fetchDataSource() {
   const url =
-    `http://localhost:8080/api/devices/` +
+    Config.host + 
+    "/api/devices/" +
     route.params.id +
     "/dataSources/" +
     connectorType +
@@ -587,8 +589,7 @@ function saveDataSource() {
 
   dataSrcViewModel.data.configuration.Operations = ops;
 
-  const url =
-    `http://localhost:8080/api/devices/` + route.params.id + `/dataSources`;
+  const url = Config.host + "/api/devices/" + route.params.id + "/dataSources";
   axios
     .put(url, JSON.stringify(dataSrcViewModel.data), {
       headers: {

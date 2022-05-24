@@ -14,6 +14,7 @@
 	<properties>
     	<java.version>11</java.version>
 		<maven.test.skip>true</maven.test.skip>
+		<portalDir>${project.parent.basedir}/portal</portalDir>
   	</properties>
 
 	<dependencies>
@@ -49,6 +50,7 @@
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
+		<!--Looks like Tomcat can not find the resources in the jar package, instead we copy the resources file directly using the maven-resources-plugin plugin-->
 		<!--dependency>
 			<groupId>dev.iotapp.connex</groupId>
 			<artifactId>connex-cloud-portal</artifactId>
@@ -94,10 +96,11 @@
 
 	<build>
 		<plugins>
+			<!-- 将项目依赖的包都打包到所生成的jar包中 -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<!-- 将项目依赖的包都打包到所生成的jar包中 -->
+				
 				<executions>
 					<execution>
 						<goals>
@@ -106,6 +109,33 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- 资源插件从前端项目复制打包好的前端资源文件到后端项目中 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy frontend resource files</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <!-- 复制前端资源文件到此文件夹中，可根据项目需要进行自定义设置-->
+                            <outputDirectory>${basedir}/src/main/resources/static</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <!-- 根据项目实际设置前端项目所生成的资源文件目录，将会从此目录中拷贝相应的文件或目录 -->
+                                    <directory>${portalDir}/target/generated-resources/static</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 </project>

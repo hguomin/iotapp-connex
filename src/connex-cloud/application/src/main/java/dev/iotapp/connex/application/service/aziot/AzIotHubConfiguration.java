@@ -18,6 +18,7 @@ import com.microsoft.azure.sdk.iot.service.auth.IotHubConnectionStringBuilder;
 import com.microsoft.azure.sdk.iot.service.auth.IotHubServiceSasToken;
 import com.microsoft.azure.sdk.iot.service.configurations.ConfigurationsClient;
 import com.microsoft.azure.sdk.iot.service.methods.DirectMethodsClient;
+import com.microsoft.azure.sdk.iot.service.query.QueryClient;
 import com.microsoft.azure.sdk.iot.service.registry.RegistryClient;
 import com.microsoft.azure.sdk.iot.service.twin.TwinClient;
 
@@ -80,10 +81,16 @@ public class AzIotHubConfiguration {
         return new TwinClient(this.connectionString);
     }
 
-    @Bean DirectMethodsClient iotHubDirectMethodClient() {
+    @Bean
+    public DirectMethodsClient iotHubDirectMethodClient() {
         return new DirectMethodsClient(this.connectionString);
     }
-    
+
+    @Bean
+    public QueryClient iotHubQueryClient() {
+        return new QueryClient(this.connectionString);
+    }
+
     @Bean
     public AzSasToken iotHubSasToken() throws Exception {
         String resourceUri = this.hostName;

@@ -1,15 +1,16 @@
 package dev.iotapp.connex.application.service;
 
 import java.util.List;
-import java.util.Map;
 
 import dev.iotapp.connex.application.model.EdgeDataConnector;
 import dev.iotapp.connex.application.model.EdgeDataSource;
-import dev.iotapp.connex.application.model.IotDevice;
+import dev.iotapp.connex.application.model.IotEdgeDevice;
 
 public interface IotHubService {
     
-    IotDevice iotHubServiceTestCode(String deviceId);
+    IotEdgeDevice iotHubServiceTestCode(String deviceId);
+    IotEdgeDevice getEdgeDevice(String deviceId);
+    List<IotEdgeDevice> getEdgeDevices();
     List<EdgeDataConnector> getEdgeModules(String deviceId);
     EdgeDataConnector deployEdgeModule(EdgeDataConnector driver);
     List<EdgeDataSource> getEdgeDataSources(String deviceId);

@@ -1,6 +1,34 @@
 <script setup lang="ts">
+import { onMounted  } from 'vue';
 import { RouterLink, RouterView } from 'vue-router'
 import gateways from '../data/gateways.json'
+import { Config } from '@/config'
+import axios from 'axios';
+
+interface IoTEdgeDevice {
+    id: string;
+    displayName: string;
+    key: string;
+    status: string;
+    connectionState: string;
+}
+
+let deviceList: IoTEdgeDevice[] = [];
+
+onMounted(() => {
+    const url = Config.host + "/api/devices";
+    axios.get(url)
+        .then(r => {
+            console.log("fetchDevices:");
+            console.log(r.data);
+
+            deviceList.length = 0;
+            for(let c of r.data) {
+                deviceList.push(c);
+            }
+        })
+        .catch(e => console.log("fetchDevices - error: " + e));
+});
 
 function handleClick(gateway: any) {
     alert(gateway.name);
@@ -19,10 +47,10 @@ function getGatewayUrl(id: string): string {
             </div>
             <div class="flex flex-col grow px-3">
                 <ul> 
-                    <li v-for="gw in gateways.gateways" :key="gw.id" class="px-3 py-2 rounded-sm hover:bg-gray-100">
-                        <router-link :to="getGatewayUrl(gw.id)">
+                    <li v-for="d in deviceList " :key="d.id" class="px-3 py-2 rounded-sm hover:bg-gray-100">
+                        <router-link :to="getGatewayUrl(d.id)">
                             <div class="flex items-center">
-                                <span class="ml-1 gw.id">{{gw.name}}</span>
+                                <span class="ml-1 gw.id">{{d.displayName}}</span>
                             </div>
                         </router-link>
                     </li>
@@ -30,12 +58,12 @@ function getGatewayUrl(id: string): string {
                 <div class="grow">
                 </div>
 
-                <div class="flexhover:bg-gray-100 px-4 py-3">
+                <!--div class="flexhover:bg-gray-100 px-4 py-3">
                     <router-link to="/edge-gateways/add" class="flex justify-center">
                         <span class="mr-2"><i class="la la-plus la-lg"></i></span>
                         <span class="font-semibold">New Gateway</span>
                     </router-link>
-                </div>
+                </div-->
             </div>
         </div>
 

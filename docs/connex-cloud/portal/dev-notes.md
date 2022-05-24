@@ -68,6 +68,12 @@ https://www.dalescott.net/modbus-development/
 https://timmousk.com/blog/typescript-map/   
 https://blog.csdn.net/sinat_35626559/article/details/113869585
 https://trungk18.com/experience/how-to-iterate-over-objects-in-typescript/  
-  
+
+## SockJS import error   
+https://pjausovec.medium.com/how-to-fix-error-ts7016-could-not-find-a-declaration-file-for-module-xyz-has-an-any-type-ecab588800a8
+
+## Sping boot configuration file  
+https://blog.csdn.net/u011047968/article/details/113006584
+
 ## Other references:  
 [VUE geting started](https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/)

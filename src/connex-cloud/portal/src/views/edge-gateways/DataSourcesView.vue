@@ -2,6 +2,7 @@
 import { ref, reactive, useAttrs, onMounted, onActivated } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import axios from 'axios'
+import { Config } from '@/config'
 
 //General data interfaces
 interface EdgeDataConnector {
@@ -86,7 +87,7 @@ function toggle() {
 }
 
 function fetchDataConnectors() {
-    const url: string = `http://localhost:8080/api/devices/` + deviceId + "/modules";
+    const url: string = Config.host + "/api/devices/" + deviceId + "/modules";
     let response = axios.get(url).then(r => {
                             console.log("fetchDataConnectors:");
                             console.log(r.data);
@@ -108,7 +109,7 @@ function fetchDataConnectors() {
 }
 
 function fetchDataSources(deviceId: string | string[]) {
-    const url = `http://localhost:8080/api/devices/` + deviceId +`/dataSources`;
+    const url = Config.host + "/api/devices/" + deviceId +`/dataSources`;
     let response = axios.get(url)
         .then(r => {
             console.log("fetchDataSources:");
@@ -131,7 +132,7 @@ function fetchDataSources(deviceId: string | string[]) {
 }
 
 function addDataSource(deviceId: string | string[]) {
-    const url = `http://localhost:8080/api/devices/` + deviceId +`/dataSources`;
+    const url = Config.host + "/api/devices/" + deviceId + "/dataSources";
 
     dataSrcAddViewModel.data.type = connectorsViewModel[dataSrcAddViewModel.data.connector].data.type;
      

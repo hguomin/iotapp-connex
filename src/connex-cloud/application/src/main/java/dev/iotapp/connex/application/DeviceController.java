@@ -1,9 +1,7 @@
 package dev.iotapp.connex.application;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -17,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.iotapp.connex.application.model.EdgeDataConnector;
 import dev.iotapp.connex.application.model.EdgeDataSource;
-import dev.iotapp.connex.application.model.IotDevice;
+import dev.iotapp.connex.application.model.IotEdgeDevice;
 import dev.iotapp.connex.application.service.IotHubService;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = { "http://localhost:3000", "https://connex-portal.azurewebsites.net", "http://connex-portal.azurewebsites.net" })
 @RequestMapping("/api/devices")
 public class DeviceController {
 
@@ -32,14 +30,13 @@ public class DeviceController {
         this.iotHubService = iotHubService;
     }
 
+    @GetMapping("/{deviceId}")
+    public IotEdgeDevice getEdgeDevice(@PathVariable String deviceId) {
+        return this.iotHubService.getEdgeDevice(deviceId);
+    }
     @GetMapping()
-    public List<IotDevice> getDeviceList() {
-        List<IotDevice> devList = new LinkedList<>();
-        devList.add(new IotDevice("100", "MyDevice1", "pwd123456"));
-        devList.add(new IotDevice("101", "MyDevice2", "pwd123456"));
-        devList.add(new IotDevice("102", "MyDevice3", "pwd123456"));
-        devList.add(this.iotHubService.iotHubServiceTestCode("104"));
-        return devList;
+    public List<IotEdgeDevice> getEdgeDevices() {
+        return this.iotHubService.getEdgeDevices();
     }
 
     @PostMapping("/{deviceId}/modules")

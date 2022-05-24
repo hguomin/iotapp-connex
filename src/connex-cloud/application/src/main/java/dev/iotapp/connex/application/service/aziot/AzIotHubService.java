@@ -2,11 +2,12 @@ package dev.iotapp.connex.application.service.aziot;
 
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
+import com.microsoft.azure.sdk.iot.service.auth.SymmetricKey;
+import com.microsoft.azure.sdk.iot.service.query.QueryClient;
+import com.microsoft.azure.sdk.iot.service.query.RawQueryResponse;
+import com.microsoft.azure.sdk.iot.service.registry.Device;
 import com.microsoft.azure.sdk.iot.service.registry.RegistryClient;
 import com.microsoft.azure.sdk.iot.service.twin.Twin;
 import com.microsoft.azure.sdk.iot.service.twin.TwinClient;
@@ -33,8 +34,6 @@ import org.springframework.stereotype.Service;
 
 import dev.iotapp.connex.application.service.IotHubService;
 
-import javax.sql.DataSource;
-
 @Service
 public class AzIotHubService implements IotHubService {
     
@@ -42,6 +41,7 @@ public class AzIotHubService implements IotHubService {
     private final ConfigurationsClient configurationsClient;
     private final TwinClient twinClient;
     private final DirectMethodsClient directMethodsClient;
+    private final QueryClient queryClient;
     private final String edgeDeploymentManifest;
     private final HashMap<String, String> dataSrcToAppMap = new HashMap<>() {
         {
@@ -80,6 +80,7 @@ public class AzIotHubService implements IotHubService {
                         ConfigurationsClient configurationsClient, 
                         TwinClient twinClient,
                         DirectMethodsClient directMethodsClient,
+                        QueryClient queryClient,
                         AzSasToken iotHubSasToken, 
                         IotHubServiceSasToken iotHubSasToken2,
                         EdgeConnectorDeploymentSettings edgeConnectorDeploymentSettings,
@@ -90,12 +91,13 @@ public class AzIotHubService implements IotHubService {
         this.configurationsClient = configurationsClient;
         this.twinClient = twinClient;
         this.directMethodsClient = directMethodsClient;
+        this.queryClient = queryClient;
         this.edgeConnectorDeploymentSettings = edgeConnectorDeploymentSettings;
         this.edgeDeploymentManifest = edgeDeploymentManifet;
     }
 
     @Override
-    public IotDevice iotHubServiceTestCode(String deviceId) {
+    public IotEdgeDevice iotHubServiceTestCode(String deviceId) {
         try {
 
             List<Module> edgeModules = this.registryClient.getModulesOnDevice("gm-dev-iotedge-device");
@@ -162,8 +164,43 @@ public class AzIotHubService implements IotHubService {
             e.printStackTrace();
         }
 
-        return new IotDevice(deviceId, "name", "key");
+        return new IotEdgeDevice(deviceId, "name", "key", "", "");
     }
+
+    @Override
+    public IotEdgeDevice getEdgeDevice(String deviceId) {
+        IotEdgeDevice edgeDevice = new IotEdgeDevice(deviceId);
+        try {
+            Device device = this.registryClient.getDevice(deviceId);
+            edgeDevice = new IotEdgeDevice(deviceId, deviceId, device.getPrimaryKey(), device.getStatus().getValue(), device.getConnectionState().getValue());
+        } catch ( IotHubException | IOException e) {
+            e.printStackTrace();
+        }
+        return edgeDevice;
+    }
+
+    @Override
+    public List<IotEdgeDevice> getEdgeDevices() {
+        List<IotEdgeDevice> devices = new LinkedList<>();
+        try {
+            RawQueryResponse query = this.queryClient.queryRaw("SELECT * FROM devices");
+            while (query.hasNext()) {
+                JSONObject deviceJson = JSON.parseObject(query.next());
+                boolean isIotEdgeDevice = (boolean)deviceJson.getJSONObject("capabilities").get("iotEdge");
+                if(isIotEdgeDevice) {
+                    String deviceId = (String)deviceJson.get("deviceId");
+                    Device device = this.registryClient.getDevice(deviceId);
+                    IotEdgeDevice edgeDevice = new IotEdgeDevice(deviceId, deviceId, device.getPrimaryKey(), device.getStatus().getValue(), device.getConnectionState().getValue());
+                    devices.add(edgeDevice);
+                }
+            }
+        } catch (IOException | IotHubException e) {
+            e.printStackTrace();
+        }
+
+        return devices;
+    }
+
     private TwinCollection initModuleTwin(Twin twin) {
         TwinCollection desiredProperties = twin.getDesiredProperties();
         desiredProperties.clear();
@@ -240,7 +277,7 @@ public class AzIotHubService implements IotHubService {
     @Override
     public EdgeDataSource addEdgeDataSource(String deviceId, EdgeDataSource ds) {
         Twin twin = this.getEdgeModuleTwin(deviceId, ds.getConnector(), ds.getType());
-
+        
         if(null != twin) {
             TwinCollection dss = (TwinCollection)twin.getDesiredProperties().get("dataSources");
             dss.put(ds.getName(), ds);
@@ -521,32 +558,34 @@ public class AzIotHubService implements IotHubService {
         try {
             edgeAgentTwin = this.twinClient.get(deviceId, "$edgeAgent");
             TwinCollection modules = (TwinCollection)edgeAgentTwin.getReportedProperties().get("modules");
-            modules.forEach((name, module) -> {
-                try {
-                    Twin moduleTwin = this.twinClient.get(deviceId, name);
-                    String product = (String)moduleTwin.getDesiredProperties().get("product");
-                    String application = (String)moduleTwin.getDesiredProperties().get("application");
-                    if(null != product && product.contentEquals("ConnexEdge")) {
-                        EdgeDataConnector connector = new EdgeDataConnector();
-                        
-                        connector.setId(name);
-                        connector.setDeviceId(deviceId);
-                        connector.setType(this.AppToDataSrcMap.get(application));
+            if(null != modules) {
+                modules.forEach((name, module) -> {
+                    try {
+                        Twin moduleTwin = this.twinClient.get(deviceId, name);
+                        String product = (String) moduleTwin.getDesiredProperties().get("product");
+                        String application = (String) moduleTwin.getDesiredProperties().get("application");
+                        if (null != product && product.contentEquals("ConnexEdge")) {
+                            EdgeDataConnector connector = new EdgeDataConnector();
 
-                        TwinCollection settings = (TwinCollection)((TwinCollection)module).get("settings");
-                        connector.setImage((String)settings.get("image"));
-                        connector.setStatus((String)((TwinCollection)module).get("runtimeStatus"));
-                        connector.setVersion((String)((TwinCollection)module).get("version"));
+                            connector.setId(name);
+                            connector.setDeviceId(deviceId);
+                            connector.setType(this.AppToDataSrcMap.get(application));
 
-                        connectors.add(connector);
+                            TwinCollection settings = (TwinCollection) ((TwinCollection) module).get("settings");
+                            connector.setImage((String) settings.get("image"));
+                            connector.setStatus((String) ((TwinCollection) module).get("runtimeStatus"));
+                            connector.setVersion((String) ((TwinCollection) module).get("version"));
+
+                            connectors.add(connector);
+                        }
+
+                    } catch (IOException | IotHubException e) {
+                        e.printStackTrace();
                     }
-                    
-                } catch (IOException | IotHubException e) {
-                    e.printStackTrace();
-                }
 
 
-            });
+                });
+            }
         } catch ( IOException | IotHubException e) {
             e.printStackTrace();
         }
