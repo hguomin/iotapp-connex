@@ -11,6 +11,8 @@ import java.time.Instant;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.microsoft.azure.sdk.iot.service.auth.IotHubConnectionString;
 import com.microsoft.azure.sdk.iot.service.auth.IotHubConnectionStringBuilder;
 import com.microsoft.azure.sdk.iot.service.auth.IotHubServiceSasToken;
@@ -19,6 +21,8 @@ import com.microsoft.azure.sdk.iot.service.methods.DirectMethodsClient;
 import com.microsoft.azure.sdk.iot.service.registry.RegistryClient;
 import com.microsoft.azure.sdk.iot.service.twin.TwinClient;
 
+import dev.iotapp.connex.application.connector.deployment.EdgeConnectorDeploymentSetting;
+import dev.iotapp.connex.application.connector.deployment.EdgeConnectorDeploymentSettings;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -111,6 +115,16 @@ public class AzIotHubConfiguration {
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("aziot/default-edge-deployment-manifest.json");
 
         return FileCopyUtils.copyToString(new InputStreamReader(in, StandardCharsets.UTF_8));
+    }
+
+    @Bean
+    public EdgeConnectorDeploymentSettings edgeConnectorDeploymentSetting() throws IOException {
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("aziot/edge-data-connector-deployment-settings.json");
+        String settings = FileCopyUtils.copyToString(new InputStreamReader(in, StandardCharsets.UTF_8));
+
+        EdgeConnectorDeploymentSettings edgeConnectorDeploymentSettings = JSON.parseObject(settings, EdgeConnectorDeploymentSettings.class);
+
+        return edgeConnectorDeploymentSettings;
     }
 
 }

@@ -367,7 +367,7 @@ function fetchDataSource() {
                 for(let k in dataPointListViewModel) {
                     delete dataPointListViewModel[k];
                 }
-                
+
                 //for data point list
                 if(r.data.configuration.OpcNodes) {
                     r.data.configuration.OpcNodes.forEach((node: any) => {
@@ -422,6 +422,8 @@ function toggleDriverDetailsEditor() {
 function editDriverDetails() {
     //Sync configuration data
     dataSrcViewModel.data.configuration.EndpointUrl = dataSrcConfEditViewModel.data.EndpointUrl;
+    dataSrcViewModel.data.configuration.UseSecurity = false,
+    dataSrcViewModel.data.configuration.OpcAuthenticationMode = "UsernamePassword",
     dataSrcViewModel.data.configuration.Username = dataSrcConfEditViewModel.data.Username;
     dataSrcViewModel.data.configuration.Password = dataSrcConfEditViewModel.data.Password;
 

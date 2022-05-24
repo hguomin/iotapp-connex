@@ -8,9 +8,9 @@
                         "minDockerVersion": "v1.25",
                         "registryCredentials": {
                             "gmdevcr": {
-                                "address": "gmdevcr.azurecr.io",
-                                "password": "KEoHXaDOq/37XyJzXg8nqwmFiPONhC34",
-                                "username": "gmdevcr"
+                                "address": "connexcr.azurecr.io",
+                                "password": "7u/YceNFzLE38gd/+ViM1xvaGohX52XY",
+                                "username": "connexcr"
                             }
                         }
                     },

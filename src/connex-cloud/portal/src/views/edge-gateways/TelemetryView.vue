@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
-import SockJS from "sockjs-client";
+import SockJS from "sockjs-client/dist/sockjs.js";
 import Chart from "chart.js/auto";
 
 let ws: any;

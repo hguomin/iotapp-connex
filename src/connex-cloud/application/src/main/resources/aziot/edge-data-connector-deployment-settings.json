@@ -1,0 +1,43 @@
+{
+  "settings": {
+    "opc-ua": {
+      "desiredProperties": {
+        "product": "ConnexEdge",
+        "application": "opcua-connector",
+        "dataSource": {}
+      },
+      "containerSettings": {
+        "image": "connexcr.azurecr.io/connex-edge/opcua-connector:2.5.6",
+        "createOptions": "{\"Cmd\":[\"--aa\"], \"HostConfig\": {\"Binds\":[\"/opt/opcua-connector:/appdata\"]}}",
+        "routes": "FROM /messages/* INTO $upstream"
+      }
+    },
+    "modbus": {
+      "desiredProperties": {
+        "product": "ConnexEdge",
+        "application": "modbus-connector",
+        "dataSources": {},
+        "PublishInterval": 2000,
+        "Version": 2,
+        "SlaveConfigs": {}
+      },
+      "containerSettings": {
+        "image": "connexcr.azurecr.io/connex-edge/modbus-connector:1.0",
+        "createOptions": "{}",
+        "routes": "FROM /messages/* INTO $upstream"
+      }
+    },
+    "ethernet-ip": {
+      "desiredProperties": {
+        "product": "ConnexEdge",
+        "application": "eip-connector",
+        "dataSources": {}
+      },
+      "containerSettings": {
+        "image": "",
+        "createOptions": "{}",
+        "routes": "FROM /messages/* INTO $upstream"
+      }
+    }
+  }
+}

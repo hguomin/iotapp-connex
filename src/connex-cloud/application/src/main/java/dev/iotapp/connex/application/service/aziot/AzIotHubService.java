@@ -24,12 +24,16 @@ import com.microsoft.azure.sdk.iot.service.methods.DirectMethodResponse;
 import com.microsoft.azure.sdk.iot.service.methods.DirectMethodsClient;
 import com.microsoft.azure.sdk.iot.service.registry.Module;
 
+import dev.iotapp.connex.application.connector.deployment.EdgeConnectorDeploymentSetting;
+import dev.iotapp.connex.application.connector.deployment.EdgeConnectorDeploymentSettings;
 import dev.iotapp.connex.application.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import dev.iotapp.connex.application.service.IotHubService;
+
+import javax.sql.DataSource;
 
 @Service
 public class AzIotHubService implements IotHubService {
@@ -41,7 +45,7 @@ public class AzIotHubService implements IotHubService {
     private final String edgeDeploymentManifest;
     private final HashMap<String, String> dataSrcToAppMap = new HashMap<>() {
         {
-            put("opc-ua", "opc-connector");
+            put("opc-ua", "opcua-connector");
             put("modbus", "modbus-connector");
             put("ethernet-ip", "eip-connector");
         }
@@ -49,7 +53,7 @@ public class AzIotHubService implements IotHubService {
 
     private final HashMap<String, String> AppToDataSrcMap = new HashMap<>() {
         {
-            put("opc-connector", "opc-ua");
+            put("opcua-connector", "opc-ua");
             put("modbus-connector", "modbus");
             put("eip-connector", "ethernet-ip");
         }
@@ -69,13 +73,16 @@ public class AzIotHubService implements IotHubService {
         }
     };
 
+    private EdgeConnectorDeploymentSettings edgeConnectorDeploymentSettings;
+
     @Autowired
     public AzIotHubService(RegistryClient registryClient, 
                         ConfigurationsClient configurationsClient, 
                         TwinClient twinClient,
                         DirectMethodsClient directMethodsClient,
                         AzSasToken iotHubSasToken, 
-                        IotHubServiceSasToken iotHubSasToken2, 
+                        IotHubServiceSasToken iotHubSasToken2,
+                        EdgeConnectorDeploymentSettings edgeConnectorDeploymentSettings,
                         @Qualifier("iotHubDefaultEdgeDeploymentManifest")
                         String edgeDeploymentManifet) {
 
@@ -83,6 +90,7 @@ public class AzIotHubService implements IotHubService {
         this.configurationsClient = configurationsClient;
         this.twinClient = twinClient;
         this.directMethodsClient = directMethodsClient;
+        this.edgeConnectorDeploymentSettings = edgeConnectorDeploymentSettings;
         this.edgeDeploymentManifest = edgeDeploymentManifet;
     }
 
@@ -234,7 +242,8 @@ public class AzIotHubService implements IotHubService {
         Twin twin = this.getEdgeModuleTwin(deviceId, ds.getConnector(), ds.getType());
 
         if(null != twin) {
-            ((ArrayList<Object>)twin.getDesiredProperties().get("dataSources")).add(ds);
+            TwinCollection dss = (TwinCollection)twin.getDesiredProperties().get("dataSources");
+            dss.put(ds.getName(), ds);
 
             try {
                 this.twinClient.patch(twin);
@@ -308,10 +317,18 @@ public class AzIotHubService implements IotHubService {
                 if(!product.contentEquals("ConnexEdge"))
                     continue;
 
-                ArrayList<EdgeDataSource> dss =  (ArrayList<EdgeDataSource>)desiredProperties.get("dataSources");
+                TwinCollection dss =  (TwinCollection)desiredProperties.get("dataSources");
                 if(null == dss || dss.isEmpty())
                     continue;
-                dataSources.addAll(dss);
+
+                dss.forEach((k, v) -> {
+                    EdgeDataSource ds = JSON.parseObject(JSON.toJSONString(v), EdgeDataSource.class);
+
+                    dataSources.add(ds);
+                });
+
+                //dataSources.addAll(dss);
+
             }
         } 
         catch (IOException | IotHubException e ) {
@@ -326,6 +343,31 @@ public class AzIotHubService implements IotHubService {
         Twin twin = this.getEdgeModuleTwin(deviceId, connector, connectorType);
         if(null != twin) {
             TwinCollection desiredProperties = twin.getDesiredProperties();
+            TwinCollection dss =  (TwinCollection)desiredProperties.get("dataSources");
+            if (null != dss) {
+                TwinCollection dataSrcTwin = (TwinCollection)dss.get(dataSrcName);
+                if(null != dataSrcTwin) {
+                    EdgeDataSource dataSrc = JSON.parseObject(JSON.toJSONString(dataSrcTwin), EdgeDataSource.class);
+                    //we will get modbus configuration from the desired properties "SlaveConfigs"
+                    if (connectorType.contentEquals("modbus")) {
+                        Map<String, Object> slaveConfigs = (Map<String, Object>)desiredProperties.get("SlaveConfigs");
+                        Map<String, Object> configuration = (Map<String, Object>)slaveConfigs.get(dataSrcName);
+
+                        //In case no any configuration
+                        if(null == configuration) {
+                            slaveConfigs.put(dataSrcName, new HashMap<>());
+                            configuration = (Map<String, Object>)slaveConfigs.get(dataSrcName);
+                        }
+
+                        configuration.put("PublishInterval", desiredProperties.get("PublishInterval"));
+                        configuration.put("Version", desiredProperties.get("Version"));
+                        dataSrc.setConfiguration(configuration);
+                    }
+                    return dataSrc;
+                }
+            }
+
+            /*
             ArrayList<Map<String, Object>> dss =  (ArrayList<Map<String, Object>>)desiredProperties.get("dataSources");
             for(Map<String, Object> ds: dss) {
                 String name = (String)ds.get("name");
@@ -340,6 +382,13 @@ public class AzIotHubService implements IotHubService {
                     if (connectorType.contentEquals("modbus")) {
                         Map<String, Object> slaveConfigs = (Map<String, Object>)desiredProperties.get("SlaveConfigs");
                         Map<String, Object> configuration = (Map<String, Object>)slaveConfigs.get(dataSrcName);
+
+                        //In case no any configuration
+                        if(null == configuration) {
+                            slaveConfigs.put(dataSrcName, new HashMap<>());
+                            configuration = (Map<String, Object>)slaveConfigs.get(dataSrcName);
+                        }
+
                         configuration.put("PublishInterval", desiredProperties.get("PublishInterval"));
                         configuration.put("Version", desiredProperties.get("Version"));
                         dataSrc.setConfiguration(configuration);
@@ -348,11 +397,59 @@ public class AzIotHubService implements IotHubService {
                     return dataSrc;
                 }
             }
+            */
         }
         return null;
     }
 
+    @Override
+    public void updateEdgeDataSource(String deviceId, EdgeDataSource ds) {
+        Twin twin = this.getEdgeModuleTwin(deviceId, ds.getConnector(), ds.getType());
+        if(null != twin) {
+            TwinCollection desiredProperties = twin.getDesiredProperties();
+            TwinCollection dss = (TwinCollection)desiredProperties.get("dataSources");
+            dss.put(ds.getName(), ds);
+            if (ds.getType().contentEquals("opc-ua")) {
+                try {
+                    //save the configuration
+                    this.twinClient.patch(twin);
 
+                    //request edge module to update opc ua connection
+                    invokeDeviceMethod(twin.getDeviceId(), twin.getModuleId(), "UnpublishAllNodes", new HashMap() {{
+                        put("EndpointUrl", ds.getConfiguration().get("EndpointUrl"));
+                    }});
+                    invokeDeviceMethod(twin.getDeviceId(), twin.getModuleId(), "PublishNodes", ds.getConfiguration());
+                }
+                catch (IOException | IotHubException e) {
+                    e.printStackTrace();
+                }
+            }
+            else if (ds.getType().contentEquals("modbus")) {
+                Map<String, Object> slaveConfigs = (Map<String, Object>)desiredProperties.get("SlaveConfigs");
+                Map<String, Object> configuration = (Map<String, Object>)slaveConfigs.get(ds.getName());
+                desiredProperties.put("PublishInterval", ds.getConfiguration().get("PublishInterval"));
+                desiredProperties.put("Version", ds.getConfiguration().get("Version"));
+
+                if (null == configuration) {
+                    slaveConfigs.put(ds.getName(), new HashMap<>());
+                    configuration = (Map<String, Object>) slaveConfigs.get(ds.getName());
+                }
+
+                Map<String, Object> finalConfiguration = configuration;
+                ds.getConfiguration().forEach((k, v) -> {
+                    finalConfiguration.put(k, v);
+                });
+
+                try {
+                    this.twinClient.patch(twin);
+                }
+                catch (IOException | IotHubException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    /*
     @Override
     public void updateEdgeDataSource(String deviceId, EdgeDataSource ds) {        
         Twin twin = this.getEdgeModuleTwin(deviceId, ds.getConnector(), ds.getType());
@@ -386,9 +483,13 @@ public class AzIotHubService implements IotHubService {
                 Map<String, Object> configuration = (Map<String, Object>)slaveConfigs.get(ds.getName());
                 desiredProperties.put("PublishInterval", ds.getConfiguration().get("PublishInterval"));
                 desiredProperties.put("Version", ds.getConfiguration().get("Version"));
-                configuration.forEach((k, v) -> {
-                    configuration.put(k, ds.getConfiguration().get(k));
-                });
+
+                if (null == configuration) {
+                    slaveConfigs.put(ds.getName(), new HashMap<>());
+                    configuration = (Map<String, Object>) slaveConfigs.get(ds.getName());
+                }
+                ds.copyTo(configuration);
+
                 try {
                     this.twinClient.patch(twin);
                 }
@@ -398,6 +499,7 @@ public class AzIotHubService implements IotHubService {
             }
         }
     }
+    */
 
     private DirectMethodResponse invokeDeviceMethod(String deviceId, String moduleId, String methodName, Map<String, Object> payload) throws IotHubException, IOException {
         DirectMethodResponse result = null;
@@ -455,8 +557,12 @@ public class AzIotHubService implements IotHubService {
     @Override
     public EdgeDataConnector deployEdgeModule(EdgeDataConnector connector) {
         //Module configuration
-        String image = this.edgeDataConnectorDeployments.get(connector.getType()).getImage(); //"gmdevcr.azurecr.io/iot/opcua-publisher:2.5.6";
-        String createOptions = this.edgeDataConnectorDeployments.get(connector.getType()).getCreateOptions(); //"{\"HostName\": \"" + driver.getId() + "\", \"Cmd\":[\"--aa\"], \"HostConfig\": {\"Binds\":[\"/opt/opcua-publisher:/appdata\"]}}";
+        EdgeConnectorDeploymentSetting deploymentSetting = this.edgeConnectorDeploymentSettings.getSetting(connector.getType());
+        if(null == deploymentSetting) {
+            return null;
+        }
+        String image = deploymentSetting.getContainerSettings().get("image"); // this.edgeDataConnectorDeployments.get(connector.getType()).getImage(); //"gmdevcr.azurecr.io/iot/opcua-publisher:2.5.6";
+        String createOptions = deploymentSetting.getContainerSettings().get("createOptions"); // this.edgeDataConnectorDeployments.get(connector.getType()).getCreateOptions(); //"{\"HostName\": \"" + driver.getId() + "\", \"Cmd\":[\"--aa\"], \"HostConfig\": {\"Binds\":[\"/opt/opcua-publisher:/appdata\"]}}";
         Map<String, Object> moduleConfiguration = new HashMap<>() {
             {
                 put("version", 1.0);
@@ -477,6 +583,10 @@ public class AzIotHubService implements IotHubService {
             {
                 put("properties.desired", new HashMap<String, Object>(){
                     {
+                        deploymentSetting.getDesiredProperties().forEach((k, v) -> {
+                            put(k, v);
+                        });
+                        /*
                         put("product", "ConnexEdge");
                         put("application", application);
                         put("dataSources", new ArrayList<>());
@@ -487,6 +597,7 @@ public class AzIotHubService implements IotHubService {
                             put("Version", 2);
                             put("SlaveConfigs", new HashMap<String, String>());
                         }
+                        */
                     }
                 });
             }
@@ -506,7 +617,7 @@ public class AzIotHubService implements IotHubService {
         modulesJson.put(connector.getId(), moduleConfiguration);;
 
         //Add routes
-        String routes = this.edgeDataConnectorDeployments.get(connector.getType()).getRoutes();
+        String routes = deploymentSetting.getContainerSettings().get("routes");
         modulesContentJson.getJSONObject("$edgeHub")
             .getJSONObject("properties.desired")
             .getJSONObject("routes")

@@ -27,22 +27,22 @@
                 <span>{{ dataSrcViewModel.data.name }}</span>
               </div>
               <div class="flex flex-col">
-                <span class="font-semibold">Driver type</span>
+                <span class="font-semibold">Connector type</span>
                 <span>{{ dataSrcViewModel.data.type }}</span>
               </div>
               <div class="flex flex-col">
-                <span class="font-semibold">Tags</span>
-                <span>{{ dataSrcViewModel.data.tags }}</span>
+                <span class="font-semibold">Connector name</span>
+                <span>{{ dataSrcViewModel.data.connector }}</span>
               </div>
             </div>
             <div class="grow flex flex-col space-y-3 py-2">
               <div class="flex flex-col">
-                <span class="font-semibold">Created by</span>
-                <span>Guomin Huang</span>
+                <span class="font-semibold">Tags</span>
+                <span>{{ dataSrcViewModel.data.tags }}</span>
               </div>
               <div class="flex flex-col">
-                <span class="font-semibold">Created by</span>
-                <span>May 7, 2022 10:41AM</span>
+                <span class="font-semibold">Created</span>
+                <span>---</span>
               </div>
             </div>
           </div>
@@ -414,226 +414,245 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onMounted, reactive, ref, } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
-import axios from 'axios'
+import { onBeforeMount, onMounted, reactive, ref } from "vue";
+import { RouterLink, RouterView, useRoute } from "vue-router";
+import axios from "axios";
 
-let connectorType = 'modbus';
+let connectorType = "modbus";
 
 let route = useRoute();
 
 let addDataPointEditor = ref(false);
-let driverDetailsEditor = ref(false)
+let driverDetailsEditor = ref(false);
 
 //General data interfaces
 interface EdgeDataSource<TConf> {
-    name: string,
-    connector: string,
-    type: string,
-    tags: string,
-    description: string,
-    configuration: TConf
-};
+  name: string;
+  connector: string;
+  type: string;
+  tags: string;
+  description: string;
+  configuration: TConf;
+}
 
 interface DataViewModel<TData> {
-    isSelected?: boolean,
-    name?: string,
-    data: TData
-};
+  isSelected?: boolean;
+  name?: string;
+  data: TData;
+}
 
 //
-//A mapped type is a type built on the syntax of the index signature. It is very useful when you don’t know the keys of an object ahead of time, 
+//A mapped type is a type built on the syntax of the index signature. It is very useful when you don’t know the keys of an object ahead of time,
 //and particularly useful in our case since we are working on an indexed object.
-//Ref: https://timmousk.com/blog/typescript-map/ 
+//Ref: https://timmousk.com/blog/typescript-map/
 //
 interface DataListViewModel<TData> {
-    [key: string]: DataViewModel<TData>
-};
+  [key: string]: DataViewModel<TData>;
+}
 
 //For modbus
-interface ModbusDataPoint{
-    UnitId: string,
-    DisplayName: string,
-    StartAddress: string,
-    Count: number,
-    PollingInterval: number,
-    CorrelationId: string
-};
+interface ModbusDataPoint {
+  UnitId: string;
+  DisplayName: string;
+  StartAddress: string;
+  Count: number;
+  PollingInterval: number;
+  CorrelationId: string;
+}
 
-
-interface ModbusOperations{
-    [id: string]: ModbusDataPoint
+interface ModbusOperations {
+  [id: string]: ModbusDataPoint;
 }
 
 interface ModbusDataSourceConfiguration {
-    PublishInterval: number,
-    Version: string,
-    SlaveConnection: string,
-    HwId: string,
-    RetryCount: number,
-    RetryInterval: number,
-    Operations: ModbusOperations
+  PublishInterval: number;
+  Version: string;
+  SlaveConnection: string;
+  HwId: string;
+  RetryCount: number;
+  RetryInterval: number;
+  Operations: ModbusOperations;
 }
 
-type ModbusDataSource = EdgeDataSource<ModbusDataSourceConfiguration>
+type ModbusDataSource = EdgeDataSource<ModbusDataSourceConfiguration>;
 
 //For saving data to backend
 let dataSrcViewModel: DataViewModel<ModbusDataSource> = reactive({
-    data: initDataSource()
+  data: initDataSource(),
 });
 
 //For editing the driver configuration
-let dataSrcConfEditViewModel: DataViewModel<ModbusDataSourceConfiguration> = reactive({
-    data: initDataSourceConfiguration()
-})
+let dataSrcConfEditViewModel: DataViewModel<ModbusDataSourceConfiguration> =
+  reactive({
+    data: initDataSourceConfiguration(),
+  });
 
 //For add/edit/delete data points
 let dataPointAddViewModel: DataViewModel<ModbusDataPoint> = reactive({
-    name: "",
-    data: initDataPoint()
+  name: "",
+  data: initDataPoint(),
 });
 let dataPointListViewModel: DataListViewModel<ModbusDataPoint> = reactive({});
 
 function initDataPoint(): ModbusDataPoint {
-    return {
-        UnitId: "",
-        DisplayName: "",
-        StartAddress: "",
-        Count: 0,
-        PollingInterval: 1000,
-        CorrelationId: "MessageType1"
-    };
+  return {
+    UnitId: "1",
+    DisplayName: "",
+    StartAddress: "",
+    Count: 0,
+    PollingInterval: 1000,
+    CorrelationId: "MessageType1",
+  };
 }
 
 function initDataSourceConfiguration(): ModbusDataSourceConfiguration {
-    return {
-        SlaveConnection: "",
-        HwId: "",
-        RetryCount: 0,
-        RetryInterval: 0,
-        PublishInterval: 0,
-        Version: "",
-        Operations: {}
-    }
+  return {
+    SlaveConnection: "",
+    HwId: "",
+    RetryCount: 20,
+    RetryInterval: 50,
+    PublishInterval: 2000,
+    Version: "2",
+    Operations: {},
+  };
 }
 
 function initDataSource(): ModbusDataSource {
-    return {
-        name: "",
-        connector: "",
-        type: "",
-        tags: "",
-        description: "",
-        configuration: initDataSourceConfiguration()
-    }
+  return {
+    name: "",
+    connector: "",
+    type: "",
+    tags: "",
+    description: "",
+    configuration: initDataSourceConfiguration(),
+  };
 }
 
 onMounted(() => {
-    fetchDataSource();
-})
+  fetchDataSource();
+});
 
 function fetchDataSource() {
-    const url = `http://localhost:8080/api/devices/` + route.params.id + '/dataSources/' + connectorType + '/'  + route.params.connector + "/" + route.params.dataSrcName;;
-    axios.get(url)
-        .then(r => {
-            if( 'object' === typeof r.data) {
-                console.log("fetchDataSource:" + JSON.stringify(r.data));
-                //for data save
-                Object.assign(dataSrcViewModel.data, r.data);
+  const url =
+    `http://localhost:8080/api/devices/` +
+    route.params.id +
+    "/dataSources/" +
+    connectorType +
+    "/" +
+    route.params.connector +
+    "/" +
+    route.params.dataSrcName;
+  axios
+    .get(url)
+    .then((r) => {
+      if ("object" === typeof r.data) {
+        console.log("fetchDataSource:" + JSON.stringify(r.data));
+        //for data save
+        Object.assign(dataSrcViewModel.data, r.data);
 
-                //for driver configuration
-                Object.assign(dataSrcConfEditViewModel.data, r.data.configuration);
+        //for driver configuration
+        Object.assign(dataSrcConfEditViewModel.data, r.data.configuration);
 
-                for(let k in dataPointListViewModel) {
-                    delete dataPointListViewModel[k];
-                }
-                
-                //for data point list
-                if(r.data.configuration.Operations) {
-                  for( let k in r.data.configuration.Operations) {
-                      dataPointListViewModel[k] = {
-                          isSelected: false,
-                          name: k,
-                          data: r.data.configuration.Operations[k]
-                      }
-                  }
-                }
-            }
-            else {
-                console.log("No such data source in the module, or no this kind of connector was deployed.");
-            }
-        })
-        .catch(e => {
-            console.log("Error: " + e);
-        })
+        for (let k in dataPointListViewModel) {
+          delete dataPointListViewModel[k];
+        }
+
+        //for data point list
+        if (r.data.configuration.Operations) {
+          for (let k in r.data.configuration.Operations) {
+            dataPointListViewModel[k] = {
+              isSelected: false,
+              name: k,
+              data: r.data.configuration.Operations[k],
+            };
+          }
+        }
+      } else {
+        console.log(
+          "No such data source in the module, or no this kind of connector was deployed."
+        );
+      }
+    })
+    .catch((e) => {
+      console.log("Error: " + e);
+    });
 }
 
 function saveDataSource() {
-    //Sync data points
-    let ops: ModbusOperations = {};
-    for( let k in dataPointListViewModel) {
-        ops[k] = dataPointListViewModel[k].data;
-    }
+  //Sync data points
+  let ops: ModbusOperations = {};
+  for (let k in dataPointListViewModel) {
+    ops[k] = dataPointListViewModel[k].data;
+  }
 
-    dataSrcViewModel.data.configuration.Operations = ops;
+  dataSrcViewModel.data.configuration.Operations = ops;
 
-    const url = `http://localhost:8080/api/devices/` + route.params.id +`/dataSources`
-    axios.put(url, JSON.stringify(dataSrcViewModel.data), {
-        headers: {
-            'Content-Type': 'application/json;charset=UTF-8'
-        }
+  const url =
+    `http://localhost:8080/api/devices/` + route.params.id + `/dataSources`;
+  axios
+    .put(url, JSON.stringify(dataSrcViewModel.data), {
+      headers: {
+        "Content-Type": "application/json;charset=UTF-8",
+      },
     })
-    .then(r => {
-        console.log(r)
+    .then((r) => {
+      console.log(r);
     })
-    .catch(e => { 
-        console.log("Error: " + e) 
+    .catch((e) => {
+      console.log("Error: " + e);
     });
 }
 
 function toggleAddDataPointEditor() {
-    addDataPointEditor.value = !addDataPointEditor.value;
+  addDataPointEditor.value = !addDataPointEditor.value;
 }
 
 function toggleDriverDetailsEditor() {
-    driverDetailsEditor.value = !driverDetailsEditor.value;
+  driverDetailsEditor.value = !driverDetailsEditor.value;
 }
 
 function editDataSourceConfiguration() {
-    //Sync configuration data
-    dataSrcViewModel.data.configuration.SlaveConnection = dataSrcConfEditViewModel.data.SlaveConnection;
-    dataSrcViewModel.data.configuration.Version = dataSrcConfEditViewModel.data.Version;
-    dataSrcViewModel.data.configuration.PublishInterval = dataSrcConfEditViewModel.data.PublishInterval;
+  //Sync configuration data
+  dataSrcViewModel.data.configuration.SlaveConnection =
+    dataSrcConfEditViewModel.data.SlaveConnection;
+  dataSrcViewModel.data.configuration.HwId = "";
+  dataSrcViewModel.data.configuration.RetryCount = 20;
+  dataSrcViewModel.data.configuration.RetryInterval = 50;
+  dataSrcViewModel.data.configuration.Version =
+    dataSrcConfEditViewModel.data.Version;
+  dataSrcViewModel.data.configuration.PublishInterval =
+    dataSrcConfEditViewModel.data.PublishInterval;
 
-    toggleDriverDetailsEditor();
+  toggleDriverDetailsEditor();
 }
 
 function addDataPoint() {
+  dataPointListViewModel[dataPointAddViewModel.name as string] = {
+    isSelected: false,
+    name: dataPointAddViewModel.name,
+    data: initDataPoint(),
+  };
 
-    dataPointListViewModel[dataPointAddViewModel.name as string] = {
-        isSelected: false,
-        name : dataPointAddViewModel.name,
-        data: initDataPoint()
-    };    
+  Object.assign(
+    dataPointListViewModel[dataPointAddViewModel.name as string].data,
+    dataPointAddViewModel.data
+  );
 
-    Object.assign(dataPointListViewModel[dataPointAddViewModel.name as string].data, dataPointAddViewModel.data);
+  dataPointAddViewModel.name = "";
+  dataPointAddViewModel.data = initDataPoint();
 
-    dataPointAddViewModel.name = "";
-    dataPointAddViewModel.data = initDataPoint();
-
-    toggleAddDataPointEditor();
+  toggleAddDataPointEditor();
 }
 
 function deleteDataPoints() {
-    for(const k  in dataPointListViewModel) {
-        if(dataPointListViewModel[k].isSelected) {
-            delete dataPointListViewModel[k];
-        }
+  for (const k in dataPointListViewModel) {
+    if (dataPointListViewModel[k].isSelected) {
+      delete dataPointListViewModel[k];
     }
+  }
 }
 
 function getUrls(id: string, dataSrcName: string): string {
   return "/edge-gateways/" + id + "/data-sources/" + dataSrcName;
 }
-
 </script>
