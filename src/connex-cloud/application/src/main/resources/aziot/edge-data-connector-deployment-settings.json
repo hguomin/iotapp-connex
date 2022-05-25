@@ -34,7 +34,7 @@
         "dataSources": {}
       },
       "containerSettings": {
-        "image": "connexcr.azurecr.io/connex-edge/modbus-connector:1.0",
+        "image": "connexcr.azurecr.io/connex-edge/enip-connector:0.0.1-amd64",
         "createOptions": "{}",
         "routes": "FROM /messages/* INTO $upstream"
       }
