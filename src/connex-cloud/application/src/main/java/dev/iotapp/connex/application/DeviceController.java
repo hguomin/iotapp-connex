@@ -19,7 +19,12 @@ import dev.iotapp.connex.application.model.IotEdgeDevice;
 import dev.iotapp.connex.application.service.IotHubService;
 
 @RestController
-@CrossOrigin(origins = { "http://localhost:3000", "https://connex-portal.azurewebsites.net", "http://connex-portal.azurewebsites.net" })
+@CrossOrigin(origins = { "https://connex-portal.azurewebsites.net", 
+                         "http://connex-portal.azurewebsites.net", 
+                         "https://connex.iotapp.dev",
+                         "http://connex.iotapp.dev",
+                         "https://connex.devplus.io",
+                         "http://connex.devplus.io" })
 @RequestMapping("/api/devices")
 public class DeviceController {
 

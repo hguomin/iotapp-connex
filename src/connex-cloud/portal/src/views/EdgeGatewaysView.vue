@@ -16,7 +16,8 @@ interface IoTEdgeDevice {
 let deviceList: IoTEdgeDevice[] = [];
 
 onMounted(() => {
-    const url = Config.host + "/api/devices";
+    const url:string = Config.host + `/api/devices`;
+    console.log(url);
     axios.get(url)
         .then(r => {
             console.log("fetchDevices:");

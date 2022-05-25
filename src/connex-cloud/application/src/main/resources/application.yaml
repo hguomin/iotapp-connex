@@ -13,9 +13,9 @@ spring:
                 azure:
                   eventhub:
                     connection-string: 
-                    checkpoint-storage-account: connexstorage  #storage account name
+                    checkpoint-storage-account:   #storage account name
                     checkpoint-access-key: 
-                    checkpoint-container: connexiothubcheckpoints  #storage container name
+                    checkpoint-container:   #storage container name
         websocket:
           type: websocket
           default-candidate: false
