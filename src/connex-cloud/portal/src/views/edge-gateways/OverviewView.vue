@@ -229,7 +229,7 @@ function fetchDevice() {
                         <select id="driver-type" v-model="connectorAddViewModel.type" class="p-1 border border-gray-400 outline-none">
                             <option value="opc-ua" class="outline-none">OpcUa</option>
                             <option value="modbus" class="outline-none">Modbus</option>
-                            <option value="ethnet-ip" class="outline-none">EthernetIP</option>
+                            <option value="ethernet-ip" class="outline-none">EthernetIP</option>
                             <option value="bacnet" class="outline-none">BacNet</option>
                         </select>
                     </div>          

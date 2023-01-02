@@ -37,7 +37,7 @@ import HelloWorld from '@/components/HelloWorld.vue'
           <div class="nav-items space-y-8 mt-6 px-0.5">
             <ul>
               <li class="px-3 py-2 rounded-sm mb-0.5 bg-slate-900">
-                <router-link to="/" class="block text-slate-200 hover:text-white truncate transition duration-150 active">
+                <router-link to="/dashboard" class="block text-slate-200 hover:text-white truncate transition duration-150 active">
                   <div class="flex items-center">
                       <span class="mr-2"><i class="la la-home la-lg"></i></span>
                       <span class="ml-1 font-medium">Dashboard</span>

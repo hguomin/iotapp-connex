@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted  } from 'vue';
+import { onMounted, reactive  } from 'vue';
 import { RouterLink, RouterView } from 'vue-router'
 import gateways from '../data/gateways.json'
 import { Config } from '@/config'
@@ -13,7 +13,7 @@ interface IoTEdgeDevice {
     connectionState: string;
 }
 
-let deviceList: IoTEdgeDevice[] = [];
+let deviceList: IoTEdgeDevice[] = reactive([]);
 
 onMounted(() => {
     const url:string = Config.host + `/api/devices`;

@@ -2,12 +2,13 @@ package dev.iotapp.connex.application;
 
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.messaging.Message;
 
 import dev.iotapp.connex.application.messaging.websocket.WebSocketHub;
 
@@ -40,5 +41,10 @@ public class ConnexCloudApplication {
                         .block();
                         */
         };
+    }
+
+    @Bean 
+    public ObjectMapper jsonObjectMapper() {
+        return new ObjectMapper();
     }
 }

@@ -7,7 +7,7 @@ import { Config } from "@/config";
 
 let ws: any;
 let message = ref("");
-const dataPointCount = 40;
+const dataPointCount = 20;
 onMounted(() => {
   
   let chartEl: HTMLCanvasElement = document.getElementById("telemetry-chart") as HTMLCanvasElement;
@@ -52,7 +52,28 @@ onMounted(() => {
   ws = new SockJS(Config.host + "/ws_sockjs");
   ws.onopen = () => {
     console.log("connected.");
-    ws.send("hello");
+    
+    let message = {
+      action: "subscribeTelemetry",
+      data: {
+        "telemetries":{
+          "temperature": { 
+            "NodeId": "ns=2;s=0:Random.Real8"
+          },
+          "humidity": {
+            "NodeId": "ns=2;s=0:Random.UInt4"
+          }
+        },
+        "persist": true
+      },
+      headers: {
+        apiVersion: "2022-05-31",
+      }
+    }
+
+    //ws.send("hello");
+    ws.send(JSON.stringify(message));
+    //ws.send(data);
   };
 
   ws.onmessage = (msg: any) => {
@@ -62,6 +83,7 @@ onMounted(() => {
     //});
     //console.log(msg.data);
     let dataPoints:any[] = JSON.parse(msg.data);
+    console.log(dataPoints);
     dataPoints.forEach((el:any) => {
       if(!dataNameToIdMap.has(el.NodeId)) {
 

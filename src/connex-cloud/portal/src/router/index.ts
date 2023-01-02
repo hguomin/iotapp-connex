@@ -11,6 +11,11 @@ const router = createRouter({
       component: () => import('../views/EdgeGatewaysView.vue')
     },
     {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/Dashboard.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting

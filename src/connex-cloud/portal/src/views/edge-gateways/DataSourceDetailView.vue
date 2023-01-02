@@ -128,14 +128,14 @@
                             <span class="mr-1"><i class="las la-trash la-lg"></i></span>
                             <span>Delete</span>
                         </button>
-                        <button class="flex px-1 items-center rounded-sm hover:bg-gray-200">
-                            <span class="mr-1"><i class="las la-sync la-lg"></i></span>
-                            <span>Refresh</span>
+                        <button @click="toggleTelemetryPanel()" class="flex px-1 items-center rounded-sm hover:bg-gray-200">
+                            <span class="mr-1"><i class="las la-chart-line la-lg"></i></span>
+                            <span>View data</span>
                         </button>
-                        <button class="flex px-1 items-center rounded-sm hover:bg-gray-200">
+                        <!--button class="flex px-1 items-center rounded-sm hover:bg-gray-200">
                             <span class="mr-1"><i class="las la-filter la-lg"></i></span>
                             <span>Filter</span>
-                        </button>
+                        </button-->
                     </div>
                 </div>
                 <div class="grow relative flex flex-col px-3">
@@ -250,18 +250,41 @@
 
         </div>
         <!--End of Side panel: Add data point-->
+
+        <!--Telemetry panel-->
+        <div :class="['fixed top-0 left-0 w-screen h-screen p-28 bg-neutral-900/75 transition duration-1000', telemetryPanel? 'flex':'hidden']">
+            <div class="flex flex-col flex-auto p-2  bg-white rounded ">
+                <div class="flex border-b-2 border-gray-300">
+                    <span class="flex-auto">
+                        <h1 class="text-lg font-semibold ">Telemetries for data points</h1>
+                    </span>
+                    <span class="pr-1">
+                        <button @click="toggleTelemetryPanel()" class="hover:bg-slate-100 p-1">
+                            <i class="las la-times la-lg"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="flex-auto p-2">
+                    <canvas id="telemetry-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        <!--End of telemetry panel-->
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, } from 'vue';
-import { RouterLink, RouterView, useRoute } from 'vue-router';
-import axios from 'axios';
-import { Config } from '@/config';
+import { onMounted, reactive, ref, } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+import axios from 'axios'
+import { Config } from '@/config'
+import SockJS from 'sockjs-client/dist/sockjs.js'
+import Chart from 'chart.js/auto'
 
 let route = useRoute();
 let addDataPointEditor = ref(false);
 let driverDetailsEditor = ref(false)
+let telemetryPanel = ref(false);
 
 //General data interfaces
 interface EdgeDataSource<TConf> {
@@ -279,6 +302,7 @@ interface DataViewModel<TData> {
     data: TData
 };
 
+//ts map 
 interface DataListViewModel<TData> {
     [key: string]: DataViewModel<TData>
 };
@@ -350,6 +374,7 @@ let dataPointListViewModel: DataListViewModel<OpcDataPoint> = reactive({});
 
 onMounted(() => {
     fetchDataSource();
+    initTelemetryChart();
 })
 
 function fetchDataSource() {
@@ -406,9 +431,11 @@ function saveDataSource() {
     })
     .then(r => {
         console.log(r)
+        alert("Data source save successfully!");
     })
     .catch(e => { 
-        console.log("Error: " + e) 
+        console.log("Error: " + e);
+        alert("Error occours: " + e);
     });
 }
 
@@ -455,4 +482,197 @@ function getUrls(id: string, dataSrcName: string): string {
   return "/edge-gateways/" + id + "/data-sources/" + dataSrcName;
 }
 
+interface TelemetryInfo {
+    NodeId: string;
+}
+interface TelemetryList {
+    [name: string]: TelemetryInfo;
+}
+
+interface TelemetryMessageData {
+    telemetries: TelemetryList;
+    persist: boolean;
+}
+
+interface TelemestryMessageHeader {
+    apiVersion: string;
+}
+
+interface TelemetryMessage {
+    action: string;
+    data: TelemetryMessageData;
+    headers: TelemestryMessageHeader;
+}
+
+let dataNameToIdMap: Map<string, number> = new Map();
+let telemetryChart: any = null;
+let telemetryConnection: any = null;
+let dataPointCount: number = 20;
+
+function toggleTelemetryPanel() {
+
+    if (!telemetryPanel.value) {
+        telemetryPanel.value = telemetryConnect();
+    }
+    else {
+        telemetryClose();
+        telemetryPanel.value = false;
+    }
+
+}
+
+function initTelemetryChart() {
+    let chartEl: HTMLCanvasElement = document.getElementById("telemetry-chart") as HTMLCanvasElement;
+    telemetryChart = new Chart(chartEl, {
+    type: "line",
+    data: {
+      labels: new Array<string>(),
+      datasets: new Array<any>()
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        title: {
+          display: true,
+          text: "Datapoints Telemetry",
+        },
+      },
+      scales: {
+        x: {
+          display: true,
+          title: {
+            display: true,
+            text: "Timestamp",
+          },
+        },
+        y: {
+          display: true,
+          title: {
+            display: true,
+            text: "Value",
+          }
+        }
+      }
+    }
+  });
+}
+
+function telemetryConnect(): boolean {
+
+    let message: TelemetryMessage = {
+        action: "subscribeTelemetry",
+        data: {
+            telemetries: {},
+            persist: false
+        },
+        headers: {
+            apiVersion: "2022-05-31"
+        }
+    };
+
+    let dataPointsCount: number = 0;
+    for(const dp  in dataPointListViewModel) {
+        if(dataPointListViewModel[dp].isSelected) {
+            ++dataPointsCount
+            message.data.telemetries[dataPointListViewModel[dp].data.Id] = {
+                NodeId: dataPointListViewModel[dp].data.Id
+            }
+        }
+    }
+
+    if (dataPointsCount == 0) {
+        alert("Please select one or more data points!");
+        return false;
+    }
+
+    telemetryConnection = new SockJS(Config.host + "/ws_sockjs");
+    telemetryConnection.onopen = () => {
+    console.log("SockJS connected.");
+    /*
+    let message2 = {
+      action: "subscribeTelemetry",
+      data: {
+        "telemetries":{
+          "temperature": { 
+            "NodeId": "ns=2;s=0:Random.Real8"
+          },
+          "humidity": {
+            "NodeId": "ns=2;s=0:Random.UInt4"
+          }
+        },
+        "persist": true
+      },
+      headers: {
+        apiVersion: "2022-05-31",
+      }
+    }
+    */
+    
+    telemetryConnection.send(JSON.stringify(message));
+  };
+
+  telemetryConnection.onmessage = (msg: any) => {
+    //message.value = JSON.stringify(msg.data);
+    //msg.data.forEach((el:any) => {
+    //  console.log(el);
+    //});
+    //console.log(msg.data);
+    let dataPoints:any[] = JSON.parse(msg.data);
+    console.log(dataPoints);
+    dataPoints.forEach((el:any) => {
+      if(!dataNameToIdMap.has(el.NodeId)) {
+
+        dataNameToIdMap.set(el.NodeId, telemetryChart.data.datasets.length);
+        
+        let newData:any = {
+          label: el.NodeId,
+          data: new Array<number>(),
+          borderColor: "#4dccf6",
+          backgroundColor: "#eeeeee",
+          //fill: false,
+          cubicInterpolationMode: 'monotone',
+          tension: 0.1
+        };
+        
+        telemetryChart.data.datasets.push(newData)
+        
+      }
+
+      let index: number = dataNameToIdMap.get(el.NodeId) as number;
+      let dataset = telemetryChart.data.datasets[index];
+
+      telemetryChart.data.labels?.push("");
+      dataset.data.push(el.Value.Value);
+      if(dataset.data.length > dataPointCount) {
+        telemetryChart.data.labels?.shift();
+        dataset.data.shift();
+      }
+
+      telemetryChart.update();
+
+    });
+  };
+
+  telemetryConnection.onclose = () => {
+    console.log("SockJS closed");
+  };
+
+  return true;
+}
+
+function telemetryClose() {
+    if(null != telemetryConnection) {
+        telemetryConnection.close();
+        telemetryConnection = null;
+
+        telemetryChart.data.datasets.length = 0;
+        telemetryChart.data.labels.length = 0;
+        dataNameToIdMap.clear();
+        telemetryChart.update();
+    }
+}
 </script>

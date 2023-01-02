@@ -1,5 +1,5 @@
 const Config = {
-    host: "https://connex-portal.azurewebsites.net"
+    host: "http://localhost" //"https://connex-portal.azurewebsites.net"
 };
 
 export { Config };

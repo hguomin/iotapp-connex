@@ -24,7 +24,8 @@ import dev.iotapp.connex.application.service.IotHubService;
                          "https://connex.iotapp.dev",
                          "http://connex.iotapp.dev",
                          "https://connex.devplus.io",
-                         "http://connex.devplus.io" })
+                         "http://connex.devplus.io",
+                         "http://localhost:3000" })
 @RequestMapping("/api/devices")
 public class DeviceController {
 

@@ -1,6 +1,7 @@
 package io.devplus.springcloudstreambinderwebsocket;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -17,29 +18,42 @@ import org.springframework.web.socket.CloseStatus;
 public class WebSocketServer extends TextWebSocketHandler implements WebSocketOperation {
     private final Logger log = LoggerFactory.getLogger(WebSocketServer.class);
 	private Consumer<Message<?>> consumer;
-	private WebSocketSession session = null;
+	private ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-		this.session = session;
+		sessions.put(session.getId(), session);
         log.debug("Websocket connection established: " + session.getId());
 	}
 
     @Override
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         log.debug("Websocket message received: " + message.getPayload());
-		this.consumer.accept(MessageBuilder.withPayload(message.getPayload()).build());
+		Message<String> msg = MessageBuilder.withPayload(message.getPayload())
+											.setHeader("sessionId", session.getId())
+											.build();
+		this.consumer.accept(msg);
 	}
 
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        session.close();
+        
+		sessions.remove(session.getId());
+		session.close();
 		session = null;
+		
         log.debug("Websocket transport error.");
 	}
 
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+		Message<String> msg = MessageBuilder.withPayload("{\"action\":\"closeSession\", \"data\": {}, \"headers\": {}}")
+			.setHeader("sessionId", session.getId())
+			.build();
+		this.consumer.accept(msg);
+		
+		sessions.remove(session.getId());
+		session.close();
 		session = null;
         log.debug("Websocket connection closed.");
 	}
@@ -51,11 +65,12 @@ public class WebSocketServer extends TextWebSocketHandler implements WebSocketOp
 
 	@Override
 	public void send(Message<?> message) throws IOException{
-		if (null == this.session) {
+		WebSocketSession session = this.sessions.get(message.getHeaders().get("sessionId"));
+		if (null == session) {
 			log.info("No websocket session to send message.");
 			return;
 		}
 
-		this.session.sendMessage(new TextMessage((byte[])message.getPayload()));
+		session.sendMessage(new TextMessage((byte[])message.getPayload()));
 	}
 }

@@ -263,7 +263,7 @@ function getUrls(id: string | string[], connectorType: string, connector:string,
                         <input id="tags" v-model="dataSrcAddViewModel.data.tags" class="p-1 border border-gray-400 outline-none" />
                     </div>
                     <div class="flex flex-col">
-                        <label for="description" class="font-semibold pb-1.5">Description <span class="text-red-600">*</span></label>
+                        <label for="description" class="font-semibold pb-1.5">Description</label>
                         <textarea id="description" v-model="dataSrcAddViewModel.data.description" class="p-1 border border-gray-400 outline-none"></textarea>
                     </div>           
                     <span class="grow"></span>
