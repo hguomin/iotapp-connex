@@ -12,10 +12,10 @@ spring:
               cloud:
                 azure:
                   eventhub:
-                    connection-string: 
-                    checkpoint-storage-account:   #storage account name
-                    checkpoint-access-key: 
-                    checkpoint-container:   #storage container name
+                    connection-string: Endpoint=sb://iothub-ns-connex-iot-19283411-0f8b344974.servicebus.windows.net/;SharedAccessKeyName=iothubowner;SharedAccessKey=DB4sz9HR+gbO1hw0dmRD5A07MNIFySSaU90d1LcyNna=;EntityPath=connex-iothub
+                    checkpoint-storage-account: connexstorage  #storage account name
+                    checkpoint-access-key: raTYYaIv6zDD25Xn5J/mJ8jRETDGhKYXKGTjcLI0OyvLoVOvDipM8gLpadVjduexji4ygSVB1lvklcnzrCPahw==
+                    checkpoint-container: connexiothubcheckpoints  #storage container name
         websocket:
           type: websocket
           default-candidate: false
@@ -33,7 +33,7 @@ spring:
         receive-in-0:
           binder: iothub-builtin-endpoint
           destination: connex-iothub #iot/event hub name
-          group: telemetry
+          group: telemetry-debug  #use a different consumer group for debugging
         websocketTest-in-0:
           binder: websocket
           destination: websocket
@@ -50,6 +50,6 @@ spring:
 
 azure:
   iothub:
-    connection-string: 
-    host-name: 
-    sas-key: 
+    connection-string: "HostName=connex-iothub.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=DB4sz9HR+gbO1hw0dmRD5A07MNIFySSaU90d1LcyNna="
+    host-name: "connex-iothub.azure-devices.net"
+    sas-key: "DB4sz9HR+gbO1hw0dmRD5A07MNIFySSaU90d1LcyNna="
